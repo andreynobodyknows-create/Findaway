@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Новость или фейк?</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app">
+      <section class="hero" aria-labelledby="title">
+        <p class="eyebrow">медиа-грамотность • мини-игра</p>
+        <h1 id="title">Новость или фейк?</h1>
+        <p class="lead">
+          Прочитай заголовок, оцени детали и реши: это реальная мировая новость
+          или убедительно звучащая выдумка.
+        </p>
+      </section>
+
+      <section class="panel scoreboard" aria-label="Статистика игры">
+        <div>
+          <span class="label">Раунд</span>
+          <strong id="round">1 / 10</strong>
+        </div>
+        <div>
+          <span class="label">Счёт</span>
+          <strong id="score">0</strong>
+        </div>
+        <div>
+          <span class="label">Серия</span>
+          <strong id="streak">0</strong>
+        </div>
+      </section>
+
+      <section class="panel card" aria-live="polite">
+        <div class="source-row">
+          <span id="category" class="chip">Мир</span>
+          <span id="date" class="date">2024</span>
+        </div>
+        <h2 id="headline">Загрузка заголовка…</h2>
+        <p id="summary" class="summary"></p>
+
+        <div class="actions" id="actions">
+          <button class="btn real" data-answer="real">Реальная новость</button>
+          <button class="btn fake" data-answer="fake">Фейк</button>
+        </div>
+
+        <div id="feedback" class="feedback hidden"></div>
+        <button id="next" class="btn next hidden">Следующий раунд</button>
+      </section>
+
+      <section class="panel tips">
+        <h2>Подсказки для проверки</h2>
+        <ul>
+          <li>Смотри на конкретику: даты, места, названия организаций и источники.</li>
+          <li>Осторожно с «слишком идеальными» или сенсационными формулировками.</li>
+          <li>Отделяй факт события от громкой интерпретации в заголовке.</li>
+        </ul>
+      </section>
+    </main>
+
+    <script src="script.js"></script>
+  </body>
+</html>
