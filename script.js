@@ -1,4 +1,5 @@
-const NEWS_ENDPOINT = 'https://api.rss2json.com/v1/api.json';
+const RSS_JSON_ENDPOINT = 'https://api.rss2json.com/v1/api.json';
+const ALL_ORIGINS_ENDPOINT = 'https://api.allorigins.win/raw';
 const WORLD_RSS_FEED = 'https://feeds.bbci.co.uk/russian/rss.xml';
 const MIN_HEADLINE_LENGTH = 35;
 const ROUND_COUNT = 10;
@@ -57,12 +58,24 @@ function todayKey() {
   return new Date().toISOString().slice(0, 10);
 }
 
+function randomInt(max) {
+  if (globalThis.crypto?.getRandomValues) {
+    return globalThis.crypto.getRandomValues(new Uint32Array(1))[0] % max;
+  }
+  return Math.floor(Math.random() * max);
+}
+
 function shuffle(items) {
-  return [...items].sort(() => crypto.getRandomValues(new Uint32Array(1))[0] - 2 ** 31);
+  const result = [...items];
+  for (let index = result.length - 1; index > 0; index -= 1) {
+    const swapIndex = randomInt(index + 1);
+    [result[index], result[swapIndex]] = [result[swapIndex], result[index]];
+  }
+  return result;
 }
 
 function sample(items) {
-  return items[crypto.getRandomValues(new Uint32Array(1))[0] % items.length];
+  return items[randomInt(items.length)];
 }
 
 function normalizeTitle(title) {
@@ -101,15 +114,49 @@ function buildFakeStories(realStories, count) {
   }));
 }
 
-async function fetchFreshNews() {
-  const params = new URLSearchParams({ rss_url: WORLD_RSS_FEED });
-  const response = await fetch(`${NEWS_ENDPOINT}?${params.toString()}`);
-  if (!response.ok) throw new Error('Не удалось загрузить актуальные новости');
+function articlesFromRssXml(xmlText) {
+  const documentXml = new DOMParser().parseFromString(xmlText, 'application/xml');
+  return [...documentXml.querySelectorAll('item')].map((item) => ({
+    title: item.querySelector('title')?.textContent || '',
+    pubDate: item.querySelector('pubDate')?.textContent || todayKey(),
+    link: item.querySelector('link')?.textContent || ''
+  }));
+}
+
+async function fetchFromRss2Json() {
+  const params = new URLSearchParams({ rss_url: WORLD_RSS_FEED, _: String(Date.now()) });
+  const response = await fetch(`${RSS_JSON_ENDPOINT}?${params.toString()}`, { cache: 'no-store' });
+  if (!response.ok) throw new Error('rss2json не ответил');
   const data = await response.json();
-  if (data.status !== 'ok') throw new Error('Новостная RSS-лента временно недоступна');
+  if (data.status !== 'ok') throw new Error('rss2json вернул ошибку');
+  return data.items || [];
+}
+
+async function fetchFromAllOrigins() {
+  const params = new URLSearchParams({ url: WORLD_RSS_FEED, _: String(Date.now()) });
+  const response = await fetch(`${ALL_ORIGINS_ENDPOINT}?${params.toString()}`, { cache: 'no-store' });
+  if (!response.ok) throw new Error('allOrigins не ответил');
+  return articlesFromRssXml(await response.text());
+}
+
+async function loadRssArticles() {
+  const loaders = [fetchFromRss2Json, fetchFromAllOrigins];
+  for (const loader of loaders) {
+    try {
+      const articles = await loader();
+      if (articles.length) return articles;
+    } catch (error) {
+      console.warn(error.message);
+    }
+  }
+  throw new Error('Не удалось загрузить RSS через доступные источники');
+}
+
+async function fetchFreshNews() {
+  const articles = await loadRssArticles();
   const unique = [];
   const seen = new Set();
-  for (const article of data.items || []) {
+  for (const article of articles) {
     const title = normalizeTitle(article.title || '');
     if (title.length < MIN_HEADLINE_LENGTH || seen.has(title.toLowerCase())) continue;
     seen.add(title.toLowerCase());
@@ -193,7 +240,7 @@ async function startGame() {
     stories = await fetchFreshNews();
     statusEl.textContent = `Новый набор создан при запуске: реальные заголовки взяты из RSS, фейки сгенерированы заново.`;
   } catch (error) {
-    statusEl.textContent = 'Не удалось загрузить свежую ленту. Проверь интернет и обнови страницу — заранее прописанного набора больше нет.';
+    statusEl.textContent = `Не удалось загрузить свежую ленту: ${error.message}. Проверь интернет и обнови страницу.`;
     headlineEl.textContent = 'Новости не загрузились';
     summaryEl.textContent = 'Игра создаёт раунды только из актуальной RSS-ленты, поэтому без доступа к новостям запуск невозможен.';
     actionsEl.classList.add('hidden');
