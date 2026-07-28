@@ -79,7 +79,6 @@ h1 { font-size: clamp(2.5rem, 7vw, 5.4rem); margin: 0; line-height: 0.95; }
 .feedback { margin-top: 22px; padding: 18px; border-radius: 18px; line-height: 1.55; }
 .feedback.correct { background: rgba(34, 197, 94, 0.16); border: 1px solid rgba(34, 197, 94, 0.45); }
 .feedback.wrong { background: rgba(251, 113, 133, 0.16); border: 1px solid rgba(251, 113, 133, 0.45); }
-.feedback a { color: #7dd3fc; font-weight: 800; }
 .hidden { display: none; }
 .tips { margin-top: 18px; padding: 22px 28px; }
 .tips h2 { margin-top: 0; }

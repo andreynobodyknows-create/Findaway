@@ -65,31 +65,26 @@ function actorFromTitle(title) {
   return proper || 'International officials';
 }
 
-function formatSource(article) {
-  const author = article.author ? ` • ${article.author}` : '';
-  return `Источник: BBC Russian${author}`;
-}
-
 function buildRealStories(articles) {
   return articles.slice(0, 6).map((article) => ({
     headline: normalizeTitle(article.title),
-    summary: `${formatSource(article)}. Открой ссылку-источник после ответа и проверь контекст перед тем, как доверять заголовку.`,
+    summary: 'Краткое сообщение из мировой повестки: в заголовке есть конкретные участники и событие, но деталей пока недостаточно для уверенного вывода.',
     category: 'Актуально',
     date: article.pubDate ? article.pubDate.slice(0, 10) : todayKey(),
     answer: 'real',
     url: article.link,
-    explanation: 'Это реальная новость из сегодняшней международной ленты. Всегда проверяй первоисточник и несколько независимых публикаций.'
+    explanation: 'Это реальная новость из сегодняшней международной ленты BBC Russian. Хорошая проверка — найти тот же факт в нескольких независимых источниках.'
   }));
 }
 
 function buildFakeStories(realStories) {
   return realStories.slice(0, 6).map((story, index) => ({
     headline: fakeTemplates[index % fakeTemplates.length]({ actor: actorFromTitle(story.headline) }),
-    summary: 'Звучит как новостной заголовок, но в нём есть необычное правило, отсутствует проверяемый источник и слишком сильная сенсационность.',
+    summary: 'Краткое сообщение из мировой повестки: в заголовке есть конкретные участники и событие, но деталей пока недостаточно для уверенного вывода.',
     category: 'Похоже на новость',
     date: todayKey(),
     answer: 'fake',
-    explanation: 'Это сгенерированный фейк: формулировка правдоподобная, но утверждение не подтверждается реальной лентой и содержит красные флаги.'
+    explanation: 'Это сгенерированный фейк: он использует реальные новостные обороты и участников повестки, но само утверждение не подтверждается сегодняшней лентой.'
   }));
 }
 
@@ -172,7 +167,7 @@ function checkAnswer(answer) {
   scoreEl.textContent = score;
   streakEl.textContent = streak;
   feedbackEl.className = `feedback ${correct ? 'correct' : 'wrong'}`;
-  feedbackEl.innerHTML = `<strong>${correct ? 'Верно!' : 'Промах.'}</strong> ${story.explanation}${story.url ? ` <a href="${story.url}" target="_blank" rel="noopener noreferrer">Открыть источник</a>` : ''}`;
+  feedbackEl.innerHTML = `<strong>${correct ? 'Верно!' : 'Промах.'}</strong> ${story.explanation}`;
   actionsEl.querySelectorAll('button').forEach((button) => (button.disabled = true));
   nextBtn.textContent = current === stories.length - 1 ? 'Показать результат' : 'Следующий раунд';
   nextBtn.classList.remove('hidden');
