@@ -1,90 +1,36 @@
-const stories = [
-  {
-    headline: 'Индия стала первой страной, посадившей аппарат около южного полюса Луны',
-    summary: 'Миссия Chandrayaan-3 успешно доставила спускаемый аппарат Vikram на поверхность Луны в августе 2023 года.',
-    category: 'Космос',
-    date: '2023',
-    answer: 'real',
-    explanation: 'Это реальная новость: посадка Chandrayaan-3 стала историческим достижением индийской космической программы.'
-  },
-  {
-    headline: 'ООН ввела единый мировой налог на личные сообщения в мессенджерах',
-    summary: 'Вирусные посты утверждают, что пользователи теперь платят за каждое отправленное сообщение.',
-    category: 'Технологии',
-    date: '2025',
-    answer: 'fake',
-    explanation: 'Это фейк: у ООН нет механизма взимать такой налог напрямую с пользователей мессенджеров.'
-  },
-  {
-    headline: 'В Японии впервые за 17 лет повысили ключевую процентную ставку',
-    summary: 'Банк Японии завершил эпоху отрицательных ставок, изменив курс денежно-кредитной политики.',
-    category: 'Экономика',
-    date: '2024',
-    answer: 'real',
-    explanation: 'Это реальная новость: решение стало заметным поворотом для японской экономики.'
-  },
-  {
-    headline: 'Учёные подтвердили, что зарядка телефона ночью стирает часть памяти владельца',
-    summary: 'Публикации ссылаются на “исследование”, но не называют журнал, институт или авторов.',
-    category: 'Наука',
-    date: '2024',
-    answer: 'fake',
-    explanation: 'Это фейк: причинной связи между ночной зарядкой телефона и памятью человека не существует.'
-  },
-  {
-    headline: 'Европейский союз окончательно одобрил комплексные правила регулирования искусственного интеллекта',
-    summary: 'AI Act вводит риск-ориентированные требования к разработчикам и пользователям ИИ-систем.',
-    category: 'Политика',
-    date: '2024',
-    answer: 'real',
-    explanation: 'Это реальная новость: ЕС принял AI Act как крупный нормативный акт об искусственном интеллекте.'
-  },
-  {
-    headline: 'Австралия перенесла столицу из Канберры в Сидней ради туристов',
-    summary: 'Заголовок распространился без официальных документов и заявлений правительства.',
-    category: 'Мир',
-    date: '2025',
-    answer: 'fake',
-    explanation: 'Это фейк: столицей Австралии остаётся Канберра.'
-  },
-  {
-    headline: 'Всемирная организация здравоохранения объявила конец чрезвычайной фазы COVID-19',
-    summary: 'ВОЗ сняла статус чрезвычайной ситуации международного значения, сохранив рекомендации по наблюдению.',
-    category: 'Здоровье',
-    date: '2023',
-    answer: 'real',
-    explanation: 'Это реальная новость: статус PHEIC был завершён в мае 2023 года.'
-  },
-  {
-    headline: 'NASA нашло на Марсе работающий светофор и опубликовало схему перекрёстка',
-    summary: 'Картинка из соцсетей похожа на обработанную фотографию марсохода.',
-    category: 'Космос',
-    date: '2024',
-    answer: 'fake',
-    explanation: 'Это фейк: подобные изображения обычно являются монтажом или шуткой.'
-  },
-  {
-    headline: 'Норвегия, Ирландия и Испания объявили о признании государства Палестина',
-    summary: 'Три европейские страны синхронно сообщили о дипломатическом решении весной 2024 года.',
-    category: 'Дипломатия',
-    date: '2024',
-    answer: 'real',
-    explanation: 'Это реальная новость: решение стало заметным дипломатическим событием.'
-  },
-  {
-    headline: 'Мировые авиакомпании договорились запретить пассажирам смотреть в иллюминатор при взлёте',
-    summary: 'Посты утверждают, что правило связано с “секретными маршрутами”, но источников нет.',
-    category: 'Путешествия',
-    date: '2025',
-    answer: 'fake',
-    explanation: 'Это фейк: такого глобального авиационного правила не существует.'
-  }
+const NEWS_ENDPOINT = 'https://api.rss2json.com/v1/api.json';
+const WORLD_RSS_FEED = 'https://feeds.bbci.co.uk/russian/rss.xml';
+const DAILY_CACHE_PREFIX = 'findaway-daily-news';
+const FALLBACK_HEADLINES = [
+  'Лидеры G7 обсуждают новые санкции и меры энергетической безопасности на саммите',
+  'Европейские регуляторы начали проверку практик крупной технологической платформы',
+  'Учёные сообщили о рекордном нагреве океанов в обновлённых климатических данных',
+  'Представители центробанка призвали к осторожности после новых данных об инфляции',
+  'Международные гуманитарные организации предупреждают об ухудшении продовольственной ситуации в зонах конфликтов',
+  'Космическое агентство подтвердило успешный запуск нового спутника наблюдения Земли',
+  'Крупные судоходные компании меняют маршруты после новых предупреждений о безопасности',
+  'Органы здравоохранения расширили кампанию вакцинации после региональной вспышки',
+  'Агентства ООН запросили срочное финансирование после сильных наводнений',
+  'Исследователи опубликовали новые данные о батарейных хранилищах для возобновляемой энергетики'
 ];
 
+const fakeTemplates = [
+  (story) => `${story.actor} тайно одобрил глобальный запрет на частные прогнозы погоды`,
+  (story) => `${story.actor} заявил, что все международные рейсы потребуют рукописное разрешение`,
+  (story) => `${story.actor} подтвердил новое правило: телефоны будут отключаться во время политических выступлений`,
+  (story) => `${story.actor} объявил, что онлайн-карты временно скроют столицы из соображений безопасности`,
+  (story) => `${story.actor} поддержал план заменить паспорта профилями в соцсетях`,
+  (story) => `${story.actor} сообщил, что электромобили должны проигрывать гимн страны во время зарядки`,
+  (story) => `${story.actor} представил экстренный проект по изменению русла крупной реки со спутников`,
+  (story) => `${story.actor} утверждает, что супермаркеты начнут маркировать товары будущей прогнозной ценой`,
+  (story) => `${story.actor} предложил считать непрочитанные письма официальными документами с истекающим сроком`,
+  (story) => `${story.actor} заявил, что астронавты нашли на Луне работающий дорожный знак`
+];
+
+let stories = [];
 let current = 0;
 let score = 0;
 let streak = 0;
-const order = [...stories].sort(() => Math.random() - 0.5);
 
 const roundEl = document.querySelector('#round');
 const scoreEl = document.querySelector('#score');
@@ -96,10 +42,101 @@ const summaryEl = document.querySelector('#summary');
 const feedbackEl = document.querySelector('#feedback');
 const nextBtn = document.querySelector('#next');
 const actionsEl = document.querySelector('#actions');
+const statusEl = document.querySelector('#status');
+
+function todayKey() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function shuffle(items) {
+  return [...items].sort(() => Math.random() - 0.5);
+}
+
+function normalizeTitle(title) {
+  return title.replace(/\s+/g, ' ').replace(/\s+-\s+[^-]{2,40}$/u, '').trim();
+}
+
+function actorFromTitle(title) {
+  const words = normalizeTitle(title)
+    .replace(/[“”"'.,:;!?()]/g, '')
+    .split(' ')
+    .filter((word) => word.length > 2);
+  const proper = words.find((word) => /^[A-ZА-ЯЁ][A-Za-zА-Яа-яЁё-]+$/.test(word));
+  return proper || 'International officials';
+}
+
+function formatSource(article) {
+  const author = article.author ? ` • ${article.author}` : '';
+  return `Источник: BBC Russian${author}`;
+}
+
+function buildRealStories(articles) {
+  return articles.slice(0, 6).map((article) => ({
+    headline: normalizeTitle(article.title),
+    summary: `${formatSource(article)}. Открой ссылку-источник после ответа и проверь контекст перед тем, как доверять заголовку.`,
+    category: 'Актуально',
+    date: article.pubDate ? article.pubDate.slice(0, 10) : todayKey(),
+    answer: 'real',
+    url: article.link,
+    explanation: 'Это реальная новость из сегодняшней международной ленты. Всегда проверяй первоисточник и несколько независимых публикаций.'
+  }));
+}
+
+function buildFakeStories(realStories) {
+  return realStories.slice(0, 6).map((story, index) => ({
+    headline: fakeTemplates[index % fakeTemplates.length]({ actor: actorFromTitle(story.headline) }),
+    summary: 'Звучит как новостной заголовок, но в нём есть необычное правило, отсутствует проверяемый источник и слишком сильная сенсационность.',
+    category: 'Похоже на новость',
+    date: todayKey(),
+    answer: 'fake',
+    explanation: 'Это сгенерированный фейк: формулировка правдоподобная, но утверждение не подтверждается реальной лентой и содержит красные флаги.'
+  }));
+}
+
+function fallbackStories() {
+  const real = buildRealStories(FALLBACK_HEADLINES.map((title, index) => ({
+    title,
+    author: 'offline-set',
+    pubDate: todayKey(),
+    link: ''
+  })));
+  return shuffle([...real, ...buildFakeStories(real)]).slice(0, 10);
+}
+
+async function fetchDailyNews() {
+  const cacheKey = `${DAILY_CACHE_PREFIX}-${todayKey()}`;
+  const cached = localStorage.getItem(cacheKey);
+  if (cached) return JSON.parse(cached);
+
+  const params = new URLSearchParams({ rss_url: WORLD_RSS_FEED });
+  const response = await fetch(`${NEWS_ENDPOINT}?${params.toString()}`);
+  if (!response.ok) throw new Error('Не удалось загрузить актуальные новости');
+  const data = await response.json();
+  if (data.status !== 'ok') throw new Error('Новостная RSS-лента временно недоступна');
+  const unique = [];
+  const seen = new Set();
+  for (const article of data.items || []) {
+    const title = normalizeTitle(article.title || '');
+    if (title.length < 35 || seen.has(title.toLowerCase())) continue;
+    seen.add(title.toLowerCase());
+    unique.push({ ...article, title });
+  }
+  const real = buildRealStories(unique);
+  const dailyStories = shuffle([...real, ...buildFakeStories(real)]).slice(0, 10);
+  if (dailyStories.length < 8) throw new Error('Недостаточно новостей для игры');
+  localStorage.setItem(cacheKey, JSON.stringify(dailyStories));
+  return dailyStories;
+}
+
+function setLoading(message) {
+  headlineEl.textContent = message;
+  summaryEl.textContent = 'Игра берёт свежие заголовки из открытой мировой новостной ленты и смешивает их с правдоподобными фейками.';
+  actionsEl.querySelectorAll('button').forEach((button) => (button.disabled = true));
+}
 
 function renderStory() {
-  const story = order[current];
-  roundEl.textContent = `${current + 1} / ${order.length}`;
+  const story = stories[current];
+  roundEl.textContent = `${current + 1} / ${stories.length}`;
   scoreEl.textContent = score;
   streakEl.textContent = streak;
   categoryEl.textContent = story.category;
@@ -107,14 +144,15 @@ function renderStory() {
   headlineEl.textContent = story.headline;
   summaryEl.textContent = story.summary;
   feedbackEl.className = 'feedback hidden';
-  feedbackEl.textContent = '';
+  feedbackEl.innerHTML = '';
   nextBtn.classList.add('hidden');
+  actionsEl.classList.remove('hidden');
   actionsEl.querySelectorAll('button').forEach((button) => (button.disabled = false));
 }
 
 function finishGame() {
   headlineEl.textContent = 'Игра окончена!';
-  summaryEl.textContent = `Твой результат: ${score} из ${order.length}. ${score >= 8 ? 'Отличный детектор фейков!' : 'Попробуй ещё раз и проверяй источники внимательнее.'}`;
+  summaryEl.textContent = `Твой результат: ${score} из ${stories.length}. ${score >= 8 ? 'Отличный детектор фейков!' : 'Попробуй ещё раз и проверяй источники внимательнее.'}`;
   categoryEl.textContent = 'Финал';
   dateEl.textContent = 'результат';
   actionsEl.classList.add('hidden');
@@ -123,7 +161,7 @@ function finishGame() {
 }
 
 function checkAnswer(answer) {
-  const story = order[current];
+  const story = stories[current];
   const correct = answer === story.answer;
   if (correct) {
     score += 1;
@@ -134,9 +172,9 @@ function checkAnswer(answer) {
   scoreEl.textContent = score;
   streakEl.textContent = streak;
   feedbackEl.className = `feedback ${correct ? 'correct' : 'wrong'}`;
-  feedbackEl.textContent = `${correct ? 'Верно!' : 'Промах.'} ${story.explanation}`;
+  feedbackEl.innerHTML = `<strong>${correct ? 'Верно!' : 'Промах.'}</strong> ${story.explanation}${story.url ? ` <a href="${story.url}" target="_blank" rel="noopener noreferrer">Открыть источник</a>` : ''}`;
   actionsEl.querySelectorAll('button').forEach((button) => (button.disabled = true));
-  nextBtn.textContent = current === order.length - 1 ? 'Показать результат' : 'Следующий раунд';
+  nextBtn.textContent = current === stories.length - 1 ? 'Показать результат' : 'Следующий раунд';
   nextBtn.classList.remove('hidden');
 }
 
@@ -146,7 +184,7 @@ actionsEl.addEventListener('click', (event) => {
 });
 
 nextBtn.addEventListener('click', () => {
-  if (current === order.length - 1) {
+  if (current === stories.length - 1) {
     if (actionsEl.classList.contains('hidden')) window.location.reload();
     else finishGame();
     return;
@@ -155,4 +193,16 @@ nextBtn.addEventListener('click', () => {
   renderStory();
 });
 
-renderStory();
+async function startGame() {
+  setLoading('Загружаем сегодняшнюю мировую повестку…');
+  try {
+    stories = await fetchDailyNews();
+    statusEl.textContent = `Обновлено сегодня: ${todayKey()}. Реальные заголовки загружены из BBC Russian RSS через rss2json и кэшируются на день.`;
+  } catch (error) {
+    stories = fallbackStories();
+    statusEl.textContent = 'Онлайн-лента недоступна, поэтому запущен резервный набор. Проверь подключение и обнови страницу.';
+  }
+  renderStory();
+}
+
+startGame();
