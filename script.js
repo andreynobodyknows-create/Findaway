@@ -1,6 +1,7 @@
 const NEWS_ENDPOINT = 'https://api.rss2json.com/v1/api.json';
 const WORLD_RSS_FEED = 'https://feeds.bbci.co.uk/russian/rss.xml';
-const DAILY_CACHE_PREFIX = 'findaway-daily-news';
+const APP_VERSION = 'neutral-cards-v2';
+const DAILY_CACHE_PREFIX = `findaway-daily-news-${APP_VERSION}`;
 const FALLBACK_HEADLINES = [
   'Лидеры G7 обсуждают новые санкции и меры энергетической безопасности на саммите',
   'Европейские регуляторы начали проверку практик крупной технологической платформы',
@@ -48,6 +49,12 @@ function todayKey() {
   return new Date().toISOString().slice(0, 10);
 }
 
+function clearOutdatedCaches() {
+  Object.keys(localStorage)
+    .filter((key) => key.startsWith('findaway-daily-news') && !key.startsWith(DAILY_CACHE_PREFIX))
+    .forEach((key) => localStorage.removeItem(key));
+}
+
 function shuffle(items) {
   return [...items].sort(() => Math.random() - 0.5);
 }
@@ -69,7 +76,7 @@ function buildRealStories(articles) {
   return articles.slice(0, 6).map((article) => ({
     headline: normalizeTitle(article.title),
     summary: 'Краткое сообщение из мировой повестки: в заголовке есть конкретные участники и событие, но деталей пока недостаточно для уверенного вывода.',
-    category: 'Актуально',
+    category: 'Мировая повестка',
     date: article.pubDate ? article.pubDate.slice(0, 10) : todayKey(),
     answer: 'real',
     url: article.link,
@@ -81,7 +88,7 @@ function buildFakeStories(realStories) {
   return realStories.slice(0, 6).map((story, index) => ({
     headline: fakeTemplates[index % fakeTemplates.length]({ actor: actorFromTitle(story.headline) }),
     summary: 'Краткое сообщение из мировой повестки: в заголовке есть конкретные участники и событие, но деталей пока недостаточно для уверенного вывода.',
-    category: 'Похоже на новость',
+    category: 'Мировая повестка',
     date: todayKey(),
     answer: 'fake',
     explanation: 'Это сгенерированный фейк: он использует реальные новостные обороты и участников повестки, но само утверждение не подтверждается сегодняшней лентой.'
@@ -99,6 +106,7 @@ function fallbackStories() {
 }
 
 async function fetchDailyNews() {
+  clearOutdatedCaches();
   const cacheKey = `${DAILY_CACHE_PREFIX}-${todayKey()}`;
   const cached = localStorage.getItem(cacheKey);
   if (cached) return JSON.parse(cached);
@@ -192,7 +200,7 @@ async function startGame() {
   setLoading('Загружаем сегодняшнюю мировую повестку…');
   try {
     stories = await fetchDailyNews();
-    statusEl.textContent = `Обновлено сегодня: ${todayKey()}. Реальные заголовки загружены из BBC Russian RSS через rss2json и кэшируются на день.`;
+    statusEl.textContent = `Обновлено сегодня: ${todayKey()}. Карточки обновлены: описания и категории до ответа больше не раскрывают тип новости.`;
   } catch (error) {
     stories = fallbackStories();
     statusEl.textContent = 'Онлайн-лента недоступна, поэтому запущен резервный набор. Проверь подключение и обнови страницу.';
