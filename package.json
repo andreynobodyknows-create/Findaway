@@ -1,0 +1,11 @@
+{
+  "name": "findaway-news-quiz",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "node --check game-core.js && node --check script.js && node --test tests/game-core.test.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
