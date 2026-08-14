@@ -9,10 +9,49 @@
   const SAME_ORIGIN_RSS_ENDPOINT = "/api/news";
   const RSS_JSON_ENDPOINT = "https://api.rss2json.com/v1/api.json";
   const ALL_ORIGINS_ENDPOINT = "https://api.allorigins.win/raw";
-  const WORLD_RSS_FEED = "https://feeds.bbci.co.uk/russian/rss.xml";
   const ROUND_COUNT = 10;
   const REQUEST_TIMEOUT_MS = 6500;
   const FAKE_HISTORY_LIMIT = 100;
+  const SOURCE_ARTICLE_LIMIT = 12;
+
+  const NEWS_SOURCES = [
+    {
+      id: "bbc",
+      name: "BBC News Русская служба",
+      feedUrl: "https://feeds.bbci.co.uk/russian/rss.xml",
+      sameOrigin: true,
+    },
+    {
+      id: "tass",
+      name: "ТАСС",
+      feedUrl: "https://tass.ru/rss/v2.xml",
+    },
+    {
+      id: "interfax",
+      name: "Интерфакс",
+      feedUrl: "https://www.interfax.ru/rss",
+    },
+    {
+      id: "kommersant",
+      name: "Коммерсантъ",
+      feedUrl: "https://www.kommersant.ru/rss/news.xml",
+    },
+    {
+      id: "rbc",
+      name: "РБК",
+      feedUrl: "https://rssexport.rbc.ru/rbcnews/news/30/full.rss",
+    },
+    {
+      id: "un",
+      name: "Новости ООН",
+      feedUrl: "https://news.un.org/feed/subscribe/ru/news/all/rss.xml",
+    },
+    {
+      id: "dw",
+      name: "Deutsche Welle",
+      feedUrl: "https://rss.dw.com/rdf/rss-ru-all",
+    },
+  ];
 
   const DEMO_ARTICLES = [
     {
@@ -102,66 +141,104 @@
     }
   }
 
-  function articlesFromRssXml(xmlText) {
-    const documentXml = new DOMParser().parseFromString(xmlText, "application/xml");
-    if (documentXml.querySelector("parsererror")) throw new Error("RSS содержит некорректный XML");
-
-    return [...documentXml.querySelectorAll("item")].map((item) => ({
-      title: item.querySelector("title")?.textContent || "",
-      pubDate: item.querySelector("pubDate")?.textContent || "",
-      link: item.querySelector("link")?.textContent || "",
-      sourceName: "BBC News Русская служба",
-    }));
+  function findChildElement(parent, localNames) {
+    const names = new Set(localNames);
+    return [...parent.getElementsByTagName("*")].find((element) =>
+      names.has(element.localName),
+    );
   }
 
-  async function fetchFromSameOrigin() {
+  function articlesFromFeedXml(xmlText, sourceName) {
+    const documentXml = new DOMParser().parseFromString(xmlText, "application/xml");
+    if (documentXml.getElementsByTagName("parsererror").length > 0) {
+      throw new Error("лента содержит некорректный XML");
+    }
+
+    const entries = [...documentXml.getElementsByTagName("*")].filter((element) =>
+      ["item", "entry"].includes(element.localName),
+    );
+
+    return entries.map((entry) => {
+      const titleElement = findChildElement(entry, ["title"]);
+      const dateElement = findChildElement(entry, ["pubDate", "date", "published", "updated"]);
+      const linkElement = findChildElement(entry, ["link"]);
+
+      return {
+        title: titleElement?.textContent || "",
+        pubDate: dateElement?.textContent || "",
+        link: linkElement?.getAttribute("href") || linkElement?.textContent || "",
+        sourceName,
+      };
+    });
+  }
+
+  async function fetchFromSameOrigin(source) {
     const response = await fetchWithTimeout(`${SAME_ORIGIN_RSS_ENDPOINT}?_=${Date.now()}`);
     if (!response.ok) throw new Error("встроенный RSS-шлюз недоступен");
-    return articlesFromRssXml(await response.text());
+    return articlesFromFeedXml(await response.text(), source.name);
   }
 
-  async function fetchFromRss2Json() {
-    const params = new URLSearchParams({ rss_url: WORLD_RSS_FEED, _: String(Date.now()) });
+  async function fetchFromRss2Json(source) {
+    const params = new URLSearchParams({ rss_url: source.feedUrl, _: String(Date.now()) });
     const response = await fetchWithTimeout(`${RSS_JSON_ENDPOINT}?${params.toString()}`);
     if (!response.ok) throw new Error("rss2json не ответил");
     const data = await response.json();
     if (data.status !== "ok" || !Array.isArray(data.items)) {
       throw new Error("rss2json вернул некорректные данные");
     }
-    return data.items.map((item) => ({ ...item, sourceName: "BBC News Русская служба" }));
+    return data.items.map((item) => ({ ...item, sourceName: source.name }));
   }
 
-  async function fetchFromAllOrigins() {
-    const params = new URLSearchParams({ url: WORLD_RSS_FEED, _: String(Date.now()) });
+  async function fetchFromAllOrigins(source) {
+    const params = new URLSearchParams({ url: source.feedUrl, _: String(Date.now()) });
     const response = await fetchWithTimeout(`${ALL_ORIGINS_ENDPOINT}?${params.toString()}`);
     if (!response.ok) throw new Error("AllOrigins не ответил");
-    return articlesFromRssXml(await response.text());
+    return articlesFromFeedXml(await response.text(), source.name);
   }
 
-  async function loadViable(loader, sourceLabel) {
-    const articles = await loader();
-    if (Core.normalizeArticles(articles).length < ROUND_COUNT / 2) {
-      throw new Error(`${sourceLabel} вернул недостаточно заголовков`);
+  async function loadSource(source) {
+    const loaders = [];
+    if (source.sameOrigin) loaders.push(() => fetchFromSameOrigin(source));
+    loaders.push(() => fetchFromRss2Json(source), () => fetchFromAllOrigins(source));
+
+    const errors = [];
+    for (const loader of loaders) {
+      try {
+        const articles = Core.normalizeArticles(await loader()).slice(0, SOURCE_ARTICLE_LIMIT);
+        if (articles.length === 0) throw new Error("нет подходящих заголовков");
+        return { source, articles };
+      } catch (error) {
+        errors.push(error);
+      }
     }
-    return { articles, sourceLabel, isDemo: false };
+
+    throw new AggregateError(errors, `${source.name}: лента недоступна`);
   }
 
   async function loadRssArticles() {
-    try {
-      return await loadViable(fetchFromSameOrigin, "BBC RSS");
-    } catch (error) {
-      console.warn(error instanceof Error ? error.message : error);
-    }
+    const results = await Promise.allSettled(NEWS_SOURCES.map((source) => loadSource(source)));
+    const loadedSources = results
+      .filter((result) => result.status === "fulfilled")
+      .map((result) => result.value);
 
-    try {
-      return await Promise.any([
-        loadViable(fetchFromRss2Json, "BBC RSS через rss2json"),
-        loadViable(fetchFromAllOrigins, "BBC RSS через AllOrigins"),
-      ]);
-    } catch (error) {
-      console.warn("Свежая RSS-лента недоступна, используется демонстрационный набор", error);
-      return { articles: DEMO_ARTICLES, sourceLabel: "демонстрационный набор", isDemo: true };
-    }
+    results.forEach((result, index) => {
+      if (result.status === "rejected") {
+        console.warn(`${NEWS_SOURCES[index].name}: лента временно недоступна`, result.reason);
+      }
+    });
+
+    const liveArticles = loadedSources.flatMap(({ articles }) => articles);
+    const needsDemoArticles =
+      Core.normalizeArticles(liveArticles).length < ROUND_COUNT / 2;
+    const articles = needsDemoArticles
+      ? [...liveArticles, ...DEMO_ARTICLES]
+      : liveArticles;
+
+    return {
+      articles,
+      sourceCount: loadedSources.length,
+      isDemo: needsDemoArticles,
+    };
   }
 
   function setButtonsDisabled(disabled) {
@@ -188,7 +265,8 @@
     dateEl.textContent = "—";
     dateEl.removeAttribute("datetime");
     headlineEl.textContent = "Загружаем свежие заголовки…";
-    summaryEl.textContent = "Если внешняя лента недоступна, игра автоматически включит демонстрационный набор.";
+    summaryEl.textContent =
+      "Если внешние ленты недоступны, игра автоматически включит демонстрационный набор.";
     statusEl.textContent = "Готовим новый выпуск…";
     actionsEl.classList.remove("hidden");
     setButtonsDisabled(true);
@@ -303,9 +381,16 @@
         excludedFakeHeadlines: recentFakeHeadlines,
       });
       rememberFakeHeadlines(stories);
-      statusEl.textContent = loaded.isDemo
-        ? "Свежая лента временно недоступна: включён демонстрационный выпуск из проверочных примеров."
-        : `Сформировано ${stories.length} раундов. Источник заголовков: ${loaded.sourceLabel}.`;
+      if (loaded.isDemo && loaded.sourceCount === 0) {
+        statusEl.textContent =
+          "Новостные ленты временно недоступны: включён демонстрационный выпуск из проверочных примеров.";
+      } else if (loaded.isDemo) {
+        statusEl.textContent =
+          `Получены данные из ${loaded.sourceCount} лент; недостающие заголовки дополнены демонстрационными примерами.`;
+      } else {
+        statusEl.textContent =
+          `Сформировано ${stories.length} раундов из ${loaded.sourceCount} доступных новостных лент.`;
+      }
       renderStory();
     } catch (error) {
       showFatalError(error);

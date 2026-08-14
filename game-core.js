@@ -279,6 +279,42 @@
     return unique;
   }
 
+  function selectBalancedArticles(articles, count, randomIntFn = randomInt) {
+    if (!Number.isInteger(count) || count < 1) {
+      throw new RangeError("Количество заголовков должно быть положительным целым числом");
+    }
+    if (!Array.isArray(articles) || articles.length < count) {
+      throw new Error(`Для выборки нужно минимум ${count} заголовков`);
+    }
+
+    const groups = new Map();
+    articles.forEach((article) => {
+      const sourceName = normalizeTitle(article?.sourceName) || "Новостная лента";
+      if (!groups.has(sourceName)) groups.set(sourceName, []);
+      groups.get(sourceName).push(article);
+    });
+
+    const queues = shuffle(
+      [...groups.values()].map((group) => shuffle(group, randomIntFn)),
+      randomIntFn,
+    );
+    const selected = [];
+
+    while (selected.length < count) {
+      let added = false;
+      for (const queue of queues) {
+        const article = queue.shift();
+        if (!article) continue;
+        selected.push(article);
+        added = true;
+        if (selected.length === count) break;
+      }
+      if (!added) break;
+    }
+
+    return selected;
+  }
+
   function buildRealStories(articles, now = new Date()) {
     return articles.map((article) => ({
       headline: article.title,
@@ -418,7 +454,7 @@
       throw new Error(`Для игры нужно минимум ${realCount} подходящих заголовков`);
     }
 
-    const selectedReal = shuffle(normalized, randomIntFn).slice(0, realCount);
+    const selectedReal = selectBalancedArticles(normalized, realCount, randomIntFn);
     const realStories = buildRealStories(selectedReal, now);
     const fakeStories = buildFakeStories(fakeCount, {
       now,
@@ -436,6 +472,7 @@
     normalizeArticles,
     normalizeTitle,
     safeHttpUrl,
+    selectBalancedArticles,
     shuffle,
     toIsoDate,
     todayKey,
