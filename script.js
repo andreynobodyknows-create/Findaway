@@ -12,6 +12,7 @@
   const WORLD_RSS_FEED = "https://feeds.bbci.co.uk/russian/rss.xml";
   const ROUND_COUNT = 10;
   const REQUEST_TIMEOUT_MS = 6500;
+  const FAKE_HISTORY_LIMIT = 100;
 
   const DEMO_ARTICLES = [
     {
@@ -56,6 +57,7 @@
   let score = 0;
   let streak = 0;
   let mode = "loading";
+  const recentFakeHeadlines = new Set();
 
   const roundEl = document.querySelector("#round");
   const scoreEl = document.querySelector("#score");
@@ -276,6 +278,17 @@
     nextBtn.classList.remove("hidden");
   }
 
+  function rememberFakeHeadlines(rounds) {
+    rounds
+      .filter((story) => story.answer === "fake")
+      .forEach((story) => recentFakeHeadlines.add(story.headline));
+
+    while (recentFakeHeadlines.size > FAKE_HISTORY_LIMIT) {
+      const oldestHeadline = recentFakeHeadlines.values().next().value;
+      recentFakeHeadlines.delete(oldestHeadline);
+    }
+  }
+
   async function startGame() {
     current = 0;
     score = 0;
@@ -285,7 +298,11 @@
 
     try {
       const loaded = await loadRssArticles();
-      stories = Core.createRoundSet(loaded.articles, { roundCount: ROUND_COUNT });
+      stories = Core.createRoundSet(loaded.articles, {
+        roundCount: ROUND_COUNT,
+        excludedFakeHeadlines: recentFakeHeadlines,
+      });
+      rememberFakeHeadlines(stories);
       statusEl.textContent = loaded.isDemo
         ? "Свежая лента временно недоступна: включён демонстрационный выпуск из проверочных примеров."
         : `Сформировано ${stories.length} раундов. Источник заголовков: ${loaded.sourceLabel}.`;

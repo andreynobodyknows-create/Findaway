@@ -4,56 +4,181 @@
   const DEFAULT_SUMMARY =
     "Заголовок показан без подсказок о его происхождении. Оцените формулировку, а после ответа проверьте источник и контекст.";
 
-  const FAKE_SUBJECTS = [
-    "Международный исследовательский совет",
-    "Координационный центр крупных городов",
-    "Экспертный комитет транспортных операторов",
-    "Оргкомитет технологического форума",
-    "Аналитический консорциум университетов",
-    "Международный совет по цифровой устойчивости",
-    "Экспертный центр городской инфраструктуры",
-  ];
-
-  const FAKE_ACTIONS = [
-    "предложил временно скрывать прогнозы погоды в дни крупных мероприятий",
-    "обсуждает рукописные разрешения для отдельных международных рейсов",
-    "готовит правило об отключении телефонов во время публичных выступлений",
-    "предложил скрывать столицы на онлайн-картах во время учений",
-    "изучает замену пропусков подтверждёнными профилями в социальных сетях",
-    "проверяет обязательный звуковой сигнал для электромобилей на зарядке",
-    "представил проект спутникового контроля цен в супермаркетах",
-    "рассматривает статус официального документа для непрочитанных писем",
-    "тестирует цифровые очереди для доступа к новостным сайтам",
-    "планирует маркировать товары прогнозной ценой на неделю вперёд",
-  ];
-
-  const FAKE_CONTEXTS = [
-    "после серии закрытых консультаций",
-    "на фоне международных переговоров",
-    "после публикации предварительного доклада",
-    "в рамках экспериментальной программы безопасности",
-    "из-за опасений по поводу дезинформации",
-    "после обращения группы регуляторов",
-    "на время пилотного проекта",
-    "в ответ на рекомендации приглашённых экспертов",
+  const FAKE_SCENARIOS = [
+    {
+      subjects: [
+        "Межрегиональный центр прикладных городских исследований",
+        "Институт транспортных технологий",
+      ],
+      action:
+        "представил методику оценки загруженности районов по обезличенным транспортным данным",
+      contexts: [
+        "по итогам исследования в нескольких пилотных регионах",
+        "после шестимесячного тестирования",
+        "для городов с населением свыше 500 тысяч человек",
+      ],
+    },
+    {
+      subjects: [
+        "Научно-аналитический центр энергосбережения",
+        "Комитет по устойчивому развитию городов",
+      ],
+      action:
+        "запустил пилотный проект автоматического учёта энергопотребления в общественных зданиях",
+      contexts: [
+        "на первом этапе в четырёх крупных городах",
+        "после испытаний системы в муниципальных учреждениях",
+        "в рамках программы на {nextYear} год",
+      ],
+    },
+    {
+      subjects: [
+        "Институт транспортных технологий",
+        "Альянс операторов общественных сервисов",
+      ],
+      action:
+        "предложил единый стандарт возврата билетов при длительных задержках межрегиональных рейсов",
+      contexts: [
+        "по запросу региональных перевозчиков",
+        "перед общественным обсуждением инициативы",
+        "после анализа обращений пассажиров за последние два года",
+      ],
+    },
+    {
+      subjects: [
+        "Совет по развитию цифровой инфраструктуры",
+        "Альянс операторов общественных сервисов",
+      ],
+      action:
+        "опубликовал рекомендации по резервному оповещению жителей при сбоях мобильной связи",
+      contexts: [
+        "после консультаций с региональными операторами",
+        "с возможностью подключения частных сервисов",
+        "перед началом пилотного этапа в нескольких регионах",
+      ],
+    },
+    {
+      subjects: [
+        "Комитет по устойчивому развитию городов",
+        "Совет по развитию цифровой инфраструктуры",
+      ],
+      action:
+        "начал испытания платформы для согласования дорожных работ между коммунальными службами",
+      contexts: [
+        "на первом этапе в четырёх крупных городах",
+        "после шестимесячной подготовки проекта",
+        "в рамках программы на {nextYear} год",
+      ],
+    },
+    {
+      subjects: [
+        "Фонд технологических инициатив регионов",
+        "Альянс операторов общественных сервисов",
+      ],
+      action:
+        "подготовил проект маркировки товаров с указанием среднего срока доставки",
+      contexts: [
+        "по итогам консультаций с интернет-магазинами",
+        "перед общественным обсуждением инициативы",
+        "после анализа обращений покупателей",
+      ],
+    },
+    {
+      subjects: [
+        "Межрегиональный центр прикладных городских исследований",
+        "Комитет по устойчивому развитию городов",
+      ],
+      action:
+        "объявил о создании открытого реестра доступности городской инфраструктуры",
+      contexts: [
+        "на первом этапе в четырёх крупных городах",
+        "после консультаций с общественными организациями",
+        "для городов с населением свыше 500 тысяч человек",
+      ],
+    },
+    {
+      subjects: [
+        "Научно-аналитический центр энергосбережения",
+        "Комитет по устойчивому развитию городов",
+      ],
+      action:
+        "согласовал параметры эксперимента по адаптивному освещению пешеходных переходов",
+      contexts: [
+        "после испытаний оборудования в лабораторных условиях",
+        "на первом этапе в четырёх крупных городах",
+        "в рамках программы на {nextYear} год",
+      ],
+    },
+    {
+      subjects: [
+        "Межрегиональный центр прикладных городских исследований",
+        "Консорциум региональных университетов",
+      ],
+      action:
+        "разработал систему контроля качества воздуха с помощью датчиков общественного транспорта",
+      contexts: [
+        "по итогам исследования в нескольких пилотных регионах",
+        "после шестимесячного тестирования",
+        "с публикацией обезличенных результатов в открытом доступе",
+      ],
+    },
+    {
+      subjects: [
+        "Совет по развитию цифровой инфраструктуры",
+        "Альянс операторов общественных сервисов",
+      ],
+      action:
+        "предложил использовать цифровые квитанции для подтверждения гарантийного срока техники",
+      contexts: [
+        "по итогам консультаций с торговыми сетями",
+        "после шестимесячного тестирования",
+        "перед общественным обсуждением инициативы",
+      ],
+    },
+    {
+      subjects: [
+        "Институт транспортных технологий",
+        "Альянс операторов общественных сервисов",
+      ],
+      action:
+        "начал тестирование единого формата уведомлений об изменениях маршрутов",
+      contexts: [
+        "по запросу региональных перевозчиков",
+        "на первом этапе в четырёх крупных городах",
+        "с возможностью подключения частных транспортных компаний",
+      ],
+    },
+    {
+      subjects: [
+        "Комитет по устойчивому развитию городов",
+        "Консорциум региональных университетов",
+      ],
+      action:
+        "представил рекомендации по учёту доступности общественных пространств при ремонте улиц",
+      contexts: [
+        "после консультаций с общественными организациями",
+        "для городов с населением свыше 500 тысяч человек",
+        "перед общественным обсуждением инициативы",
+      ],
+    },
   ];
 
   const FAKE_LEADS = [
-    "В предварительной концепции указано",
-    "По данным авторов пилотной программы",
-    "Как следует из проекта заявления",
-    "Организаторы эксперимента сообщили",
-    "В рабочем документе говорится",
-    "Участники консультаций утверждают",
+    "По данным предварительного отчёта",
+    "По итогам пилотного этапа",
+    "Как следует из проекта рекомендаций",
+    "Согласно опубликованной концепции",
+    "В опубликованной концепции говорится",
+    "Авторы инициативы сообщили",
   ];
 
   const FAKE_TAILS = [
-    "детали обещают раскрыть после пилота",
-    "результаты планируют оценить до конца года",
-    "проект пока не имеет окончательного статуса",
-    "инициативу представили как ограниченный эксперимент",
-    "сроки запуска ещё обсуждаются",
-    "решение объяснили вопросами безопасности",
+    "первые результаты представят до конца года",
+    "решение планируют обсудить с региональными операторами",
+    "методику опубликуют после завершения пилота",
+    "подключение новых участников начнётся на втором этапе",
+    "итоги эксперимента станут основой для окончательного регламента",
+    "участие в проекте на первом этапе будет добровольным",
   ];
 
   function todayKey(date = new Date()) {
@@ -146,7 +271,7 @@
         title,
         pubDate: article?.pubDate ?? "",
         link: safeHttpUrl(article?.link),
-        sourceName: normalizeTitle(article?.sourceName) || "BBC News Русская служба",
+        sourceName: normalizeTitle(article?.sourceName) || "Новостная лента",
         isDemo: Boolean(article?.isDemo),
       });
     }
@@ -165,7 +290,7 @@
       sourceName: article.sourceName,
       explanation: article.isDemo
         ? "Это проверочный заголовок из встроенного демонстрационного набора. Он используется, когда свежая лента временно недоступна."
-        : "Этот заголовок получен из ленты BBC News Русская служба. Наличие в ленте подтверждает происхождение заголовка, но важные факты всё равно стоит сверять по нескольким независимым источникам.",
+        : `Этот заголовок получен из ленты «${article.sourceName}». Наличие в ленте подтверждает происхождение заголовка, но важные факты всё равно стоит сверять по нескольким независимым источникам.`,
     }));
   }
 
@@ -177,21 +302,49 @@
     return value.charAt(0).toLocaleUpperCase("ru-RU") + value.slice(1);
   }
 
-  function buildFakeCandidates() {
+  function buildFakeCandidates(now = new Date()) {
     const candidates = [];
+    const nextYear = String(now.getFullYear() + 1);
+    const addCandidate = (headline, scenarioKey) => {
+      candidates.push({ headline, scenarioKey });
+    };
 
-    FAKE_SUBJECTS.forEach((subject, subjectIndex) => {
-      FAKE_ACTIONS.forEach((action, actionIndex) => {
-        FAKE_CONTEXTS.forEach((context, contextIndex) => {
-          const lead = FAKE_LEADS[(subjectIndex + actionIndex + contextIndex) % FAKE_LEADS.length];
-          const tail = FAKE_TAILS[(subjectIndex * 2 + actionIndex + contextIndex) % FAKE_TAILS.length];
-          const template = (subjectIndex + actionIndex * 2 + contextIndex) % 4;
+    FAKE_SCENARIOS.forEach((scenario, scenarioIndex) => {
+      scenario.subjects.forEach((subject, subjectIndex) => {
+        scenario.contexts.forEach((rawContext, contextIndex) => {
+          const context = rawContext.replace("{nextYear}", nextYear);
 
-          if (template === 0) candidates.push(`${subject} ${action} ${context}`);
-          if (template === 1) candidates.push(`${lead}: ${lowerFirst(subject)} ${action} ${context}`);
-          if (template === 2) candidates.push(`${subject} ${action} ${context}, ${tail}`);
-          if (template === 3) {
-            candidates.push(`${capitalizeFirst(context)} ${lowerFirst(subject)} ${action}; ${tail}`);
+          for (let template = 0; template < 4; template += 1) {
+            const lead =
+              FAKE_LEADS[
+                (scenarioIndex + subjectIndex + contextIndex + template) % FAKE_LEADS.length
+              ];
+            const tail =
+              FAKE_TAILS[
+                (scenarioIndex * 2 + subjectIndex + contextIndex + template) % FAKE_TAILS.length
+              ];
+
+            if (template === 0) {
+              addCandidate(`${subject} ${scenario.action} ${context}`, scenarioIndex);
+            }
+            if (template === 1) {
+              addCandidate(
+                `${lead}: ${lowerFirst(subject)} ${scenario.action} ${context}`,
+                scenarioIndex,
+              );
+            }
+            if (template === 2) {
+              addCandidate(
+                `${subject} ${scenario.action} ${context}; ${tail}`,
+                scenarioIndex,
+              );
+            }
+            if (template === 3) {
+              addCandidate(
+                `${capitalizeFirst(context)} ${lowerFirst(subject)} ${scenario.action}`,
+                scenarioIndex,
+              );
+            }
           }
         });
       });
@@ -200,13 +353,37 @@
     return candidates;
   }
 
-  function buildFakeStories(count, { now = new Date(), randomIntFn = randomInt } = {}) {
-    const candidates = shuffle(buildFakeCandidates(), randomIntFn);
-    if (!Number.isInteger(count) || count < 1 || count > candidates.length) {
+  function buildFakeStories(
+    count,
+    {
+      now = new Date(),
+      randomIntFn = randomInt,
+      excludedHeadlines = [],
+    } = {},
+  ) {
+    const excluded = new Set(
+      Array.from(excludedHeadlines, (headline) =>
+        normalizeTitle(headline).toLocaleLowerCase("ru-RU"),
+      ),
+    );
+    const candidates = shuffle(buildFakeCandidates(now), randomIntFn).filter(
+      ({ headline }) => !excluded.has(headline.toLocaleLowerCase("ru-RU")),
+    );
+    const selected = [];
+    const selectedScenarios = new Set();
+
+    for (const candidate of candidates) {
+      if (selectedScenarios.has(candidate.scenarioKey)) continue;
+      selected.push(candidate);
+      selectedScenarios.add(candidate.scenarioKey);
+      if (selected.length === count) break;
+    }
+
+    if (!Number.isInteger(count) || count < 1 || selected.length < count) {
       throw new RangeError("Невозможно сформировать запрошенное число фейковых заголовков");
     }
 
-    return candidates.slice(0, count).map((headline) => ({
+    return selected.map(({ headline }) => ({
       headline,
       summary: DEFAULT_SUMMARY,
       category: "Новостная повестка",
@@ -226,6 +403,7 @@
       minHeadlineLength = 35,
       now = new Date(),
       randomIntFn = randomInt,
+      excludedFakeHeadlines = [],
     } = {},
   ) {
     if (!Number.isInteger(roundCount) || roundCount < 2) {
@@ -242,7 +420,11 @@
 
     const selectedReal = shuffle(normalized, randomIntFn).slice(0, realCount);
     const realStories = buildRealStories(selectedReal, now);
-    const fakeStories = buildFakeStories(fakeCount, { now, randomIntFn });
+    const fakeStories = buildFakeStories(fakeCount, {
+      now,
+      randomIntFn,
+      excludedHeadlines: excludedFakeHeadlines,
+    });
     return shuffle([...realStories, ...fakeStories], randomIntFn);
   }
 

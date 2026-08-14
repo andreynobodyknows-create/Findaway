@@ -4,6 +4,7 @@ import test from "node:test";
 import vm from "node:vm";
 
 const source = await readFile(new URL("../game-core.js", import.meta.url), "utf8");
+const markup = await readFile(new URL("../index.html", import.meta.url), "utf8");
 const context = vm.createContext({ URL, Intl, Date, console });
 vm.runInContext(source, context, { filename: "game-core.js" });
 const Core = context.FindawayCore;
@@ -28,6 +29,35 @@ test("пустые значения и RSS-даты обрабатываются
 test("небезопасные URL отбрасываются", () => {
   assert.equal(Core.safeHttpUrl("javascript:alert(1)"), "");
   assert.equal(Core.safeHttpUrl("https://example.com/a"), "https://example.com/a");
+});
+
+test("кнопки подписаны как правда и фейк", () => {
+  assert.match(markup, /data-answer="real" disabled>\s*правда\s*<\/button>/u);
+  assert.match(markup, /data-answer="fake" disabled>\s*фейк\s*<\/button>/u);
+});
+
+test("каждая новая игра получает свежие реалистичные фейковые заголовки", () => {
+  const options = {
+    now: new Date("2026-08-14T12:00:00Z"),
+    randomIntFn: () => 0,
+  };
+  const firstGame = Core.buildFakeStories(5, options);
+  const secondGame = Core.buildFakeStories(5, {
+    ...options,
+    excludedHeadlines: firstGame.map((story) => story.headline),
+  });
+  const firstHeadlines = new Set(firstGame.map((story) => story.headline));
+
+  assert.equal(
+    secondGame.some((story) => firstHeadlines.has(story.headline)),
+    false,
+  );
+  assert.equal(
+    [...firstGame, ...secondGame].every(
+      (story) => story.headline.length >= 80 && story.headline.split(/\s+/u).length >= 10,
+    ),
+    true,
+  );
 });
 
 test("набор строится из RSS-объектов с полем title", () => {
