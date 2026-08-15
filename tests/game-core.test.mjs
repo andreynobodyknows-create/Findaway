@@ -11,16 +11,33 @@ vm.runInContext(source, context, { filename: "game-core.js" });
 const Core = context.FindawayCore;
 
 const articles = [
-  "Первый проверочный заголовок содержит достаточно символов для игрового раунда",
-  "Второй проверочный заголовок содержит достаточно символов для игрового раунда",
-  "Третий проверочный заголовок содержит достаточно символов для игрового раунда",
-  "Четвёртый проверочный заголовок содержит достаточно символов для игрового раунда",
-  "Пятый проверочный заголовок содержит достаточно символов для игрового раунда",
+  "Число погибших в результате землетрясения в Индонезии превысило 40 человек",
+  "Конституционный совет Франции признал незаконным запрет на соцсети для детей до 15 лет",
+  "Российские пловцы завоевали бронзу в смешанной эстафете на чемпионате Европы",
+  "Авиасообщение возобновилось в аэропорту Бендер-Аббаса на юге Ирана",
+  "Уровень воды в реке Рейн опустился до нового рекордного минимума",
+  "Катар опроверг заявление Ирана о пленении трех пилотов Су-24",
+  "Испания продлевает срок эксплуатации одной из основных АЭС",
+  "С 2021 года более 2,6 миллиона девочек в Афганистане лишились возможности получить образование",
+  "Краснодар обыграл Ахмат и сохранил лидерство в национальном чемпионате",
+  "Власти России усилят контроль за поездками граждан за границу",
 ].map((title, index) => ({
   title,
-  pubDate: `2026-08-0${index + 1}`,
+  pubDate: `2026-08-${String(index + 1).padStart(2, "0")}`,
   link: `https://example.com/story-${index + 1}`,
+  sourceName: `Источник ${(index % 5) + 1}`,
 }));
+
+function normalizedKey(value) {
+  return value.toLocaleLowerCase("ru-RU").replace(/\s+/gu, " ").trim();
+}
+
+function wordOverlap(left, right) {
+  const leftWords = new Set(left.toLocaleLowerCase("ru-RU").match(/\p{L}{3,}/gu) || []);
+  const rightWords = new Set(right.toLocaleLowerCase("ru-RU").match(/\p{L}{3,}/gu) || []);
+  const shared = [...leftWords].filter((word) => rightWords.has(word)).length;
+  return shared / Math.max(1, Math.min(leftWords.size, rightWords.size));
+}
 
 test("пустые значения и RSS-даты обрабатываются безопасно", () => {
   assert.equal(Core.normalizeTitle(undefined), "");
@@ -73,10 +90,47 @@ test("реальные раунды распределяются между до
   assert.equal(realSources.size, 5);
 });
 
-test("каждая новая игра получает свежие реалистичные фейковые заголовки", () => {
+test("фейки наследуют форму текущей ленты и меняют фактические детали", () => {
   const options = {
     now: new Date("2026-08-14T12:00:00Z"),
     randomIntFn: () => 0,
+    referenceArticles: articles,
+    knownRealHeadlines: articles.map((article) => article.title),
+  };
+  const firstGame = Core.buildFakeStories(5, options);
+  const realKeys = new Set(articles.map((article) => normalizedKey(article.title)));
+  const realAverageLength =
+    articles.reduce((sum, article) => sum + article.title.length, 0) / articles.length;
+  const fakeAverageLength =
+    firstGame.reduce((sum, story) => sum + story.headline.length, 0) / firstGame.length;
+
+  assert.equal(firstGame.every((story) => !realKeys.has(normalizedKey(story.headline))), true);
+  assert.equal(
+    firstGame.every((story) =>
+      articles.some((article) => Core.toIsoDate(article.pubDate) === story.date),
+    ),
+    true,
+  );
+  assert.equal(fakeAverageLength >= realAverageLength * 0.75, true);
+  assert.equal(fakeAverageLength <= realAverageLength * 1.25, true);
+  assert.equal(
+    firstGame.every((story) =>
+      articles.some((article) => wordOverlap(story.headline, article.title) >= 0.6),
+    ),
+    true,
+  );
+  assert.equal(
+    firstGame.some((story) => /Межрегиональный центр|пилотного этапа/iu.test(story.headline)),
+    false,
+  );
+});
+
+test("каждая новая игра получает свежие фейковые заголовки", () => {
+  const options = {
+    now: new Date("2026-08-14T12:00:00Z"),
+    randomIntFn: () => 0,
+    referenceArticles: articles,
+    knownRealHeadlines: articles.map((article) => article.title),
   };
   const firstGame = Core.buildFakeStories(5, options);
   const secondGame = Core.buildFakeStories(5, {
@@ -90,11 +144,59 @@ test("каждая новая игра получает свежие реали�
     false,
   );
   assert.equal(
-    [...firstGame, ...secondGame].every(
-      (story) => story.headline.length >= 80 && story.headline.split(/\s+/u).length >= 10,
-    ),
+    [...firstGame, ...secondGame].every((story) => story.headline.length >= 35),
     true,
   );
+});
+
+test("составные подмены не создают тавтологию и внутренние противоречия", () => {
+  const referenceArticles = [articles[4], articles[7]];
+  const stories = Core.buildFakeStories(2, {
+    now: new Date("2026-08-14T12:00:00Z"),
+    randomIntFn: () => 0,
+    referenceArticles,
+    knownRealHeadlines: referenceArticles.map((article) => article.title),
+  });
+
+  stories.forEach((story) => {
+    assert.doesNotMatch(story.headline, /получили возможность получить/iu);
+    assert.doesNotMatch(story.headline, /поднялся[^.]*минимума/iu);
+    assert.doesNotMatch(story.headline, /опустился[^.]*максимума/iu);
+  });
+});
+
+test("генератор не превращает текущий год в очевидно будущий спортивный сезон", () => {
+  const referenceArticles = [{
+    title: "Гимнастка Мельникова довела до четырех число своих медалей на ЧЕ-2026",
+    pubDate: "2026-08-15",
+  }];
+  const [story] = Core.buildFakeStories(1, {
+    now: new Date("2026-08-15T12:00:00Z"),
+    randomIntFn: () => 0,
+    referenceArticles,
+    knownRealHeadlines: referenceArticles.map((article) => article.title),
+  });
+
+  assert.doesNotMatch(story.headline, /2027/u);
+});
+
+test("изменённые числа сохраняют согласование с существительным", () => {
+  const referenceArticles = [{
+    title: "С утра субботы российские военные сбили над регионами 180 дронов ВСУ",
+    pubDate: "2026-08-15",
+  }];
+  const [story] = Core.buildFakeStories(1, {
+    now: new Date("2026-08-15T12:00:00Z"),
+    randomIntFn: () => 0,
+    referenceArticles,
+    knownRealHeadlines: referenceArticles.map((article) => article.title),
+  });
+  const value = Number(story.headline.match(/(\d+) дронов/u)?.[1]);
+  const lastTwo = value % 100;
+  const last = value % 10;
+
+  assert.equal(Number.isFinite(value), true);
+  assert.equal((lastTwo >= 11 && lastTwo <= 14) || last === 0 || last >= 5, true);
 });
 
 test("набор строится из RSS-объектов с полем title", () => {
