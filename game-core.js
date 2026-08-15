@@ -4,181 +4,113 @@
   const DEFAULT_SUMMARY =
     "Заголовок показан без подсказок о его происхождении. Оцените формулировку, а после ответа проверьте источник и контекст.";
 
-  const FAKE_SCENARIOS = [
-    {
-      subjects: [
-        "Межрегиональный центр прикладных городских исследований",
-        "Институт транспортных технологий",
-      ],
-      action:
-        "представил методику оценки загруженности районов по обезличенным транспортным данным",
-      contexts: [
-        "по итогам исследования в нескольких пилотных регионах",
-        "после шестимесячного тестирования",
-        "для городов с населением свыше 500 тысяч человек",
-      ],
-    },
-    {
-      subjects: [
-        "Научно-аналитический центр энергосбережения",
-        "Комитет по устойчивому развитию городов",
-      ],
-      action:
-        "запустил пилотный проект автоматического учёта энергопотребления в общественных зданиях",
-      contexts: [
-        "на первом этапе в четырёх крупных городах",
-        "после испытаний системы в муниципальных учреждениях",
-        "в рамках программы на {nextYear} год",
-      ],
-    },
-    {
-      subjects: [
-        "Институт транспортных технологий",
-        "Альянс операторов общественных сервисов",
-      ],
-      action:
-        "предложил единый стандарт возврата билетов при длительных задержках межрегиональных рейсов",
-      contexts: [
-        "по запросу региональных перевозчиков",
-        "перед общественным обсуждением инициативы",
-        "после анализа обращений пассажиров за последние два года",
-      ],
-    },
-    {
-      subjects: [
-        "Совет по развитию цифровой инфраструктуры",
-        "Альянс операторов общественных сервисов",
-      ],
-      action:
-        "опубликовал рекомендации по резервному оповещению жителей при сбоях мобильной связи",
-      contexts: [
-        "после консультаций с региональными операторами",
-        "с возможностью подключения частных сервисов",
-        "перед началом пилотного этапа в нескольких регионах",
-      ],
-    },
-    {
-      subjects: [
-        "Комитет по устойчивому развитию городов",
-        "Совет по развитию цифровой инфраструктуры",
-      ],
-      action:
-        "начал испытания платформы для согласования дорожных работ между коммунальными службами",
-      contexts: [
-        "на первом этапе в четырёх крупных городах",
-        "после шестимесячной подготовки проекта",
-        "в рамках программы на {nextYear} год",
-      ],
-    },
-    {
-      subjects: [
-        "Фонд технологических инициатив регионов",
-        "Альянс операторов общественных сервисов",
-      ],
-      action:
-        "подготовил проект маркировки товаров с указанием среднего срока доставки",
-      contexts: [
-        "по итогам консультаций с интернет-магазинами",
-        "перед общественным обсуждением инициативы",
-        "после анализа обращений покупателей",
-      ],
-    },
-    {
-      subjects: [
-        "Межрегиональный центр прикладных городских исследований",
-        "Комитет по устойчивому развитию городов",
-      ],
-      action:
-        "объявил о создании открытого реестра доступности городской инфраструктуры",
-      contexts: [
-        "на первом этапе в четырёх крупных городах",
-        "после консультаций с общественными организациями",
-        "для городов с населением свыше 500 тысяч человек",
-      ],
-    },
-    {
-      subjects: [
-        "Научно-аналитический центр энергосбережения",
-        "Комитет по устойчивому развитию городов",
-      ],
-      action:
-        "согласовал параметры эксперимента по адаптивному освещению пешеходных переходов",
-      contexts: [
-        "после испытаний оборудования в лабораторных условиях",
-        "на первом этапе в четырёх крупных городах",
-        "в рамках программы на {nextYear} год",
-      ],
-    },
-    {
-      subjects: [
-        "Межрегиональный центр прикладных городских исследований",
-        "Консорциум региональных университетов",
-      ],
-      action:
-        "разработал систему контроля качества воздуха с помощью датчиков общественного транспорта",
-      contexts: [
-        "по итогам исследования в нескольких пилотных регионах",
-        "после шестимесячного тестирования",
-        "с публикацией обезличенных результатов в открытом доступе",
-      ],
-    },
-    {
-      subjects: [
-        "Совет по развитию цифровой инфраструктуры",
-        "Альянс операторов общественных сервисов",
-      ],
-      action:
-        "предложил использовать цифровые квитанции для подтверждения гарантийного срока техники",
-      contexts: [
-        "по итогам консультаций с торговыми сетями",
-        "после шестимесячного тестирования",
-        "перед общественным обсуждением инициативы",
-      ],
-    },
-    {
-      subjects: [
-        "Институт транспортных технологий",
-        "Альянс операторов общественных сервисов",
-      ],
-      action:
-        "начал тестирование единого формата уведомлений об изменениях маршрутов",
-      contexts: [
-        "по запросу региональных перевозчиков",
-        "на первом этапе в четырёх крупных городах",
-        "с возможностью подключения частных транспортных компаний",
-      ],
-    },
-    {
-      subjects: [
-        "Комитет по устойчивому развитию городов",
-        "Консорциум региональных университетов",
-      ],
-      action:
-        "представил рекомендации по учёту доступности общественных пространств при ремонте улиц",
-      contexts: [
-        "после консультаций с общественными организациями",
-        "для городов с населением свыше 500 тысяч человек",
-        "перед общественным обсуждением инициативы",
-      ],
-    },
+  const FACT_SWAP_RULES = [
+    ["погибли", "пострадали", "исход события"],
+    ["погиб", "пострадал", "исход события"],
+    ["погибла", "пострадала", "исход события"],
+    ["ранены", "погибли", "исход события"],
+    ["нашли мертвым", "нашли живым", "исход события"],
+    ["нашли мертвой", "нашли живой", "исход события"],
+    ["завоевали бронзу", "завоевали серебро", "результат соревнования"],
+    ["золото", "серебро", "результат соревнования"],
+    ["выиграл", "проиграл", "результат соревнования"],
+    ["сохранил лидерство", "потерял лидерство", "результат соревнования"],
+    ["побил мировой рекорд", "не смог побить мировой рекорд", "результат соревнования"],
+    ["вышла в третий круг", "не прошла во второй круг", "результат соревнования"],
+    ["вышел в третий круг", "не прошел во второй круг", "результат соревнования"],
+    ["повысил", "снизил", "направление изменения"],
+    ["повысила", "снизила", "направление изменения"],
+    ["повысили", "снизили", "направление изменения"],
+    ["увеличил", "сократил", "направление изменения"],
+    ["увеличила", "сократила", "направление изменения"],
+    ["вырос", "снизился", "направление изменения"],
+    ["выросла", "снизилась", "направление изменения"],
+    [
+      "опустился до нового рекордного минимума",
+      "поднялся до нового рекордного максимума",
+      "направление изменения",
+    ],
+    ["превысило", "не достигло", "числовой порог"],
+    ["одобрил", "отклонил", "решение"],
+    ["одобрила", "отклонила", "решение"],
+    ["разрешил", "запретил", "решение"],
+    ["разрешила", "запретила", "решение"],
+    ["открыл", "закрыл", "статус объекта"],
+    ["открыла", "закрыла", "статус объекта"],
+    ["возобновилось", "приостановлено", "статус сообщения"],
+    ["усилят", "ослабят", "характер меры"],
+    ["продлевает", "сокращает", "срок"],
+    ["опроверг", "подтвердил", "позиция участника"],
+    ["опровергла", "подтвердила", "позиция участника"],
+    ["отверг", "подтвердил", "позиция участника"],
+    ["отвергла", "подтвердила", "позиция участника"],
+    ["признал незаконным", "признал законным", "правовая оценка"],
+    ["признала незаконным", "признала законным", "правовая оценка"],
+    ["отразили атаку", "не смогли отразить атаку", "исход события"],
+    ["сбили", "обнаружили", "характер события"],
+    ["проведет переговоры", "отменил переговоры", "дипломатическое решение"],
+    ["игнорировала звонки", "передала записи звонков", "действие ведомства"],
+    ["наращивает", "сокращает", "масштаб мер"],
+    ["зафиксировала более", "зафиксировала менее", "числовой порог"],
+    ["лишились возможности получить", "смогли продолжить получать", "исход события"],
+    ["рассылает предостережения", "отзывает предостережения", "действие ведомства"],
+    ["запрет", "разрешение", "правовая мера"],
+    ["временно", "бессрочно", "срок"],
+    ["до конца года", "в начале следующего года", "срок"],
+    ["в ближайшие дни", "не раньше следующего месяца", "срок"],
+    ["сильного землетрясения", "сильного наводнения", "тип события"],
+    ["землетрясения", "наводнения", "тип события"],
+    ["эболы", "лихорадки Марбург", "тип заболевания", "literal"],
+    ["нефти", "топлива", "тип вещества"],
+    ["в Белгородской области", "в Курской области", "география события"],
+    ["под Белгородом", "под Курском", "география события"],
+    ["в Москве", "в Санкт-Петербурге", "география события"],
+    ["в Петербурге", "в Москве", "география события"],
+    ["в Индонезии", "на Филиппинах", "география события"],
+    ["в Колумбии", "в Эквадоре", "география события"],
+    ["в Афганистане", "в Пакистане", "география события"],
+    ["в Турции", "в Греции", "география события"],
+    ["Турция", "Сербия", "география события"],
+    ["Турции", "Сербии", "география события"],
+    ["в Иране", "в Ираке", "география события"],
+    ["Ирана", "Ирака", "география события"],
+    ["Катар", "Оман", "география события"],
+    ["Катара", "Омана", "география события"],
+    ["Катаром", "Оманом", "география события"],
+    ["в Украине", "в Молдове", "география события"],
+    ["Украина", "Молдова", "география события"],
+    ["в России", "в Беларуси", "география события"],
+    ["России", "Беларуси", "география события"],
+    ["Франции", "Испании", "география события"],
+    ["Южный Судан", "Сомали", "география события"],
+    ["Западной Азии", "Северной Африке", "география события"],
+    ["Рейн", "Дунай", "география события"],
+    ["Краснодар", "Зенит", "участник события"],
+    ["Ахмат", "Рубин", "участник события"],
+    ["Роскосмоса", "Росатома", "организация"],
+    ["Marvel", "Disney", "организация"],
+    ["Евросоюз", "НАТО", "организация"],
+    ["чемпионате Европы", "чемпионате мира", "соревнование"],
+    ["ЧЕ", "ЧМ", "соревнование"],
   ];
 
-  const FAKE_LEADS = [
-    "По данным предварительного отчёта",
-    "По итогам пилотного этапа",
-    "Как следует из проекта рекомендаций",
-    "Согласно опубликованной концепции",
-    "В опубликованной концепции говорится",
-    "Авторы инициативы сообщили",
-  ];
-
-  const FAKE_TAILS = [
-    "первые результаты представят до конца года",
-    "решение планируют обсудить с региональными операторами",
-    "методику опубликуют после завершения пилота",
-    "подключение новых участников начнётся на втором этапе",
-    "итоги эксперимента станут основой для окончательного регламента",
-    "участие в проекте на первом этапе будет добровольным",
+  const FALLBACK_FAKE_HEADLINES = [
+    "Центробанк допустил снижение ключевой ставки до {rate}% на заседании в сентябре",
+    "В Казани временно закрыли аэропорт после сообщения о неизвестном беспилотнике",
+    "Сборная Сербии впервые вышла в полуфинал чемпионата Европы по волейболу",
+    "Минтруд предложил перенести индексацию социальных выплат на начало {nextYear} года",
+    "Крупнейшие банки снизили ставки по вкладам после публикации данных об инфляции",
+    "У берегов Греции обнаружили грузовое судно, пропавшее более {days} дней назад",
+    "Всемирная организация здравоохранения подтвердила новую вспышку лихорадки Марбург",
+    "Еврокомиссия одобрила временные ограничения на импорт отдельных видов топлива",
+    "Стоимость золота впервые с января превысила {price} долларов за тройскую унцию",
+    "Авиакомпании предупредили о задержках рейсов из-за сбоя системы бронирования",
+    "Ученые зафиксировали рекордное снижение уровня воды в одной из крупнейших рек Европы",
+    "Правительство Японии продлило срок эксплуатации двух атомных электростанций",
+    "Власти Испании отменили ограничения на движение поездов после сильного наводнения",
+    "Клуб из Санкт-Петербурга проиграл третий матч подряд в национальном чемпионате",
+    "Суд признал законным запрет на использование соцсетей для детей младше {age} лет",
+    "Оман подтвердил задержание трех иностранных пилотов после посадки военного самолета",
   ];
 
   function todayKey(date = new Date()) {
@@ -330,58 +262,257 @@
     }));
   }
 
-  function lowerFirst(value) {
-    return value.charAt(0).toLocaleLowerCase("ru-RU") + value.slice(1);
-  }
-
   function capitalizeFirst(value) {
     return value.charAt(0).toLocaleUpperCase("ru-RU") + value.slice(1);
   }
 
-  function buildFakeCandidates(now = new Date()) {
+  function headlineKey(value) {
+    return normalizeTitle(value).toLocaleLowerCase("ru-RU");
+  }
+
+  function isLetterOrNumber(value) {
+    return Boolean(value && /[\p{L}\p{N}]/u.test(value));
+  }
+
+  function findTermIndex(value, term) {
+    const text = String(value);
+    const normalizedText = text.toLocaleLowerCase("ru-RU");
+    const normalizedTerm = term.toLocaleLowerCase("ru-RU");
+    let index = normalizedText.indexOf(normalizedTerm);
+
+    while (index >= 0) {
+      const before = text[index - 1];
+      const after = text[index + term.length];
+      if (!isLetterOrNumber(before) && !isLetterOrNumber(after)) return index;
+      index = normalizedText.indexOf(normalizedTerm, index + 1);
+    }
+
+    return -1;
+  }
+
+  function replacementWithMatchingCase(replacement, matched) {
+    const letters = matched.replace(/[^\p{L}]/gu, "");
+    if (letters && letters === letters.toLocaleUpperCase("ru-RU")) {
+      return replacement.toLocaleUpperCase("ru-RU");
+    }
+    if (matched.charAt(0) === matched.charAt(0).toLocaleUpperCase("ru-RU")) {
+      return capitalizeFirst(replacement);
+    }
+    return replacement;
+  }
+
+  function replaceTerm(value, from, to, caseMode = "match") {
+    const index = findTermIndex(value, from);
+    if (index < 0) return "";
+    const matched = value.slice(index, index + from.length);
+    const replacement = caseMode === "literal" ? to : replacementWithMatchingCase(to, matched);
+    return `${value.slice(0, index)}${replacement}${value.slice(index + from.length)}`;
+  }
+
+  function buildTermMutations(headline) {
+    const mutations = [];
+
+    FACT_SWAP_RULES.forEach(([left, right, detail, caseMode], ruleIndex) => {
+      const leftIndex = findTermIndex(headline, left);
+      const rightIndex = findTermIndex(headline, right);
+      if (leftIndex < 0 && rightIndex < 0) return;
+
+      const useRight = rightIndex >= 0 && (leftIndex < 0 || right.length > left.length);
+      const from = useRight ? right : left;
+      const to = useRight ? left : right;
+      mutations.push({
+        key: `term-${ruleIndex}`,
+        detail,
+        apply: (value) => replaceTerm(value, from, to, caseMode),
+      });
+    });
+
+    return mutations;
+  }
+
+  function russianCountCategory(value) {
+    const absolute = Math.abs(Math.trunc(value));
+    const lastTwo = absolute % 100;
+    const last = absolute % 10;
+    if (lastTwo >= 11 && lastTwo <= 14) return "many";
+    if (last === 1) return "one";
+    if (last >= 2 && last <= 4) return "few";
+    return "many";
+  }
+
+  function preserveCountCategory(original, alternative) {
+    const category = russianCountCategory(original);
+    const direction = alternative >= original ? 1 : -1;
+    let candidate = Math.max(1, Math.round(alternative));
+
+    for (let attempt = 0; attempt < 25; attempt += 1) {
+      if (russianCountCategory(candidate) === category) return candidate;
+      candidate = Math.max(1, candidate + direction);
+    }
+
+    return Math.max(1, Math.round(alternative));
+  }
+
+  function numericAlternatives(rawValue, now = new Date(), preserveCountForm = false) {
+    const decimalSeparator = rawValue.includes(",") ? "," : ".";
+    const decimalPlaces = rawValue.includes(",") || rawValue.includes(".")
+      ? rawValue.split(/[.,]/u)[1].length
+      : 0;
+    const value = Number(rawValue.replace(",", "."));
+    if (!Number.isFinite(value)) return [];
+
+    let alternatives;
+    if (Number.isInteger(value) && value >= 1900 && value <= now.getFullYear() + 5) {
+      alternatives = value >= now.getFullYear()
+        ? [value - 1, value - 2]
+        : [value - 1, Math.min(now.getFullYear(), value + 1)];
+    } else if (decimalPlaces > 0) {
+      const step = Math.max(0.5, value * 0.25);
+      alternatives = [value + step, Math.max(0.1, value - step)];
+    } else if (value <= 5) {
+      alternatives = [value + 1, value + 2];
+    } else if (value <= 20) {
+      alternatives = [value + 3, Math.max(1, value - 2)];
+    } else if (value <= 100) {
+      alternatives = [value + 7, Math.max(1, value - 6)];
+    } else {
+      alternatives = [Math.round(value * 1.2), Math.max(1, Math.round(value * 0.8))];
+    }
+
+    if (preserveCountForm && decimalPlaces === 0 && value < 1900) {
+      alternatives = alternatives.map((alternative) =>
+        preserveCountCategory(value, alternative),
+      );
+    }
+
+    return [...new Set(alternatives)]
+      .filter((alternative) => alternative !== value)
+      .map((alternative) => {
+        if (decimalPlaces === 0) return String(Math.round(alternative));
+        return alternative.toFixed(decimalPlaces).replace(".", decimalSeparator);
+      });
+  }
+
+  function replaceNumberOccurrence(value, rawValue, occurrenceIndex, replacement) {
+    const matches = [...value.matchAll(/\d+(?:[.,]\d+)?/gu)].filter(
+      (match) => match[0] === rawValue,
+    );
+    const match = matches[occurrenceIndex];
+    if (!match || match.index === undefined) return "";
+    return `${value.slice(0, match.index)}${replacement}${value.slice(match.index + rawValue.length)}`;
+  }
+
+  function buildNumberMutations(headline, now = new Date()) {
+    const matches = [...headline.matchAll(/\d+(?:[.,]\d+)?/gu)];
+    const occurrenceCounts = new Map();
+    const mutations = [];
+
+    matches.slice(0, 4).forEach((match, numberIndex) => {
+      const rawValue = match[0];
+      const numericValue = Number(rawValue.replace(",", "."));
+      const occurrenceIndex = occurrenceCounts.get(rawValue) || 0;
+      occurrenceCounts.set(rawValue, occurrenceIndex + 1);
+      const prefix = headline.slice(Math.max(0, (match.index || 0) - 3), match.index || 0);
+      const suffix = headline.slice(
+        (match.index || 0) + rawValue.length,
+        (match.index || 0) + rawValue.length + 12,
+      );
+      const looksLikeModelNumber = numericValue < 1900 && /[\p{L}]-$/u.test(prefix);
+      if (looksLikeModelNumber) return;
+      const hasOrdinalSuffix = /^-(?:го|ей|му|ое|ую|ая|ий|ой|ый|ые|ую|ю|я|е|й)/iu.test(suffix);
+      const preserveCountForm = !hasOrdinalSuffix && /^\s+\p{L}/u.test(suffix);
+
+      numericAlternatives(rawValue, now, preserveCountForm).forEach((replacement, alternativeIndex) => {
+        mutations.push({
+          key: `number-${numberIndex}-${alternativeIndex}`,
+          detail: "числовые данные",
+          apply: (value) =>
+            replaceNumberOccurrence(value, rawValue, occurrenceIndex, replacement),
+        });
+      });
+    });
+
+    return mutations;
+  }
+
+  function isStyleCompatible(headline, referenceHeadline) {
+    const normalized = normalizeTitle(headline);
+    if (normalized.length < 35 || normalized === normalizeTitle(referenceHeadline)) return false;
+    const lengthRatio = normalized.length / referenceHeadline.length;
+    return lengthRatio >= 0.68 && lengthRatio <= 1.32;
+  }
+
+  function buildArticleFakeCandidates(article, now = new Date()) {
+    const referenceHeadline = normalizeTitle(article?.title);
+    if (!referenceHeadline) return [];
+    const referenceKey = headlineKey(referenceHeadline);
+    const date = toIsoDate(article?.pubDate, now);
+    const mutations = [
+      ...buildTermMutations(referenceHeadline),
+      ...buildNumberMutations(referenceHeadline, now),
+    ];
     const candidates = [];
-    const nextYear = String(now.getFullYear() + 1);
-    const addCandidate = (headline, scenarioKey) => {
-      candidates.push({ headline, scenarioKey });
+    const seen = new Set([referenceKey]);
+
+    const addCandidate = (headline, usedMutations) => {
+      const normalized = normalizeTitle(headline);
+      const key = headlineKey(normalized);
+      if (!key || seen.has(key) || !isStyleCompatible(normalized, referenceHeadline)) return;
+      seen.add(key);
+      candidates.push({
+        headline: normalized,
+        date,
+        referenceKey,
+        mutationCount: usedMutations.length,
+        details: [...new Set(usedMutations.map((mutation) => mutation.detail))],
+      });
     };
 
-    FAKE_SCENARIOS.forEach((scenario, scenarioIndex) => {
-      scenario.subjects.forEach((subject, subjectIndex) => {
-        scenario.contexts.forEach((rawContext, contextIndex) => {
-          const context = rawContext.replace("{nextYear}", nextYear);
+    for (let firstIndex = 0; firstIndex < mutations.length; firstIndex += 1) {
+      for (let secondIndex = firstIndex + 1; secondIndex < mutations.length; secondIndex += 1) {
+        const first = mutations[firstIndex];
+        const second = mutations[secondIndex];
+        if (first.detail === second.detail) continue;
+        const afterFirst = first.apply(referenceHeadline);
+        const afterSecond = afterFirst ? second.apply(afterFirst) : "";
+        if (afterSecond) addCandidate(afterSecond, [first, second]);
+      }
+    }
 
-          for (let template = 0; template < 4; template += 1) {
-            const lead =
-              FAKE_LEADS[
-                (scenarioIndex + subjectIndex + contextIndex + template) % FAKE_LEADS.length
-              ];
-            const tail =
-              FAKE_TAILS[
-                (scenarioIndex * 2 + subjectIndex + contextIndex + template) % FAKE_TAILS.length
-              ];
+    mutations.forEach((mutation) => {
+      const headline = mutation.apply(referenceHeadline);
+      if (headline) addCandidate(headline, [mutation]);
+    });
 
-            if (template === 0) {
-              addCandidate(`${subject} ${scenario.action} ${context}`, scenarioIndex);
-            }
-            if (template === 1) {
-              addCandidate(
-                `${lead}: ${lowerFirst(subject)} ${scenario.action} ${context}`,
-                scenarioIndex,
-              );
-            }
-            if (template === 2) {
-              addCandidate(
-                `${subject} ${scenario.action} ${context}; ${tail}`,
-                scenarioIndex,
-              );
-            }
-            if (template === 3) {
-              addCandidate(
-                `${capitalizeFirst(context)} ${lowerFirst(subject)} ${scenario.action}`,
-                scenarioIndex,
-              );
-            }
-          }
+    return candidates;
+  }
+
+  function buildReferenceFakeCandidates(referenceArticles, now = new Date()) {
+    return normalizeArticles(referenceArticles).flatMap((article) =>
+      buildArticleFakeCandidates(article, now),
+    );
+  }
+
+  function buildFallbackFakeCandidates(now = new Date()) {
+    const candidates = [];
+    const replacements = Array.from({ length: 4 }, (_, variant) => ({
+      age: String(13 + variant),
+      days: String(9 + variant * 4),
+      nextYear: String(now.getFullYear() + 1 + (variant % 2)),
+      price: String(2450 + variant * 175),
+      rate: String(12 + variant * 2),
+    }));
+
+    FALLBACK_FAKE_HEADLINES.forEach((template, templateIndex) => {
+      const hasPlaceholder = /\{\w+\}/u.test(template);
+      replacements.slice(0, hasPlaceholder ? replacements.length : 1).forEach((values, variant) => {
+        const headline = template.replace(/\{(\w+)\}/gu, (_, key) => values[key] || "");
+        candidates.push({
+          headline,
+          date: todayKey(now),
+          referenceKey: `fallback-${templateIndex}-${variant}`,
+          mutationCount: 2,
+          details: ["событие", "обстоятельства"],
         });
       });
     });
@@ -395,40 +526,76 @@
       now = new Date(),
       randomIntFn = randomInt,
       excludedHeadlines = [],
+      referenceArticles = [],
+      knownRealHeadlines = [],
     } = {},
   ) {
+    if (!Number.isInteger(count) || count < 1) {
+      throw new RangeError("Количество фейковых заголовков должно быть положительным целым числом");
+    }
+
     const excluded = new Set(
-      Array.from(excludedHeadlines, (headline) =>
-        normalizeTitle(headline).toLocaleLowerCase("ru-RU"),
+      Array.from(excludedHeadlines, (headline) => headlineKey(headline)),
+    );
+    const realHeadlineKeys = new Set(
+      [
+        ...normalizeArticles(referenceArticles).map((article) => article.title),
+        ...knownRealHeadlines,
+      ].map((headline) => headlineKey(headline)),
+    );
+    const referenceCandidates = buildReferenceFakeCandidates(referenceArticles, now).filter(
+      ({ headline }) => !excluded.has(headlineKey(headline)) && !realHeadlineKeys.has(headlineKey(headline)),
+    );
+    const candidates = [
+      ...shuffle(
+        referenceCandidates.filter(({ mutationCount }) => mutationCount >= 2),
+        randomIntFn,
       ),
-    );
-    const candidates = shuffle(buildFakeCandidates(now), randomIntFn).filter(
-      ({ headline }) => !excluded.has(headline.toLocaleLowerCase("ru-RU")),
-    );
+      ...shuffle(
+        referenceCandidates.filter(({ mutationCount }) => mutationCount === 1),
+        randomIntFn,
+      ),
+      ...shuffle(buildFallbackFakeCandidates(now), randomIntFn).filter(
+        ({ headline }) => !excluded.has(headlineKey(headline)) && !realHeadlineKeys.has(headlineKey(headline)),
+      ),
+    ];
     const selected = [];
-    const selectedScenarios = new Set();
+    const selectedHeadlines = new Set();
+    const selectedReferences = new Set();
 
     for (const candidate of candidates) {
-      if (selectedScenarios.has(candidate.scenarioKey)) continue;
+      const key = headlineKey(candidate.headline);
+      if (selectedHeadlines.has(key) || selectedReferences.has(candidate.referenceKey)) continue;
       selected.push(candidate);
-      selectedScenarios.add(candidate.scenarioKey);
+      selectedHeadlines.add(key);
+      selectedReferences.add(candidate.referenceKey);
       if (selected.length === count) break;
     }
 
-    if (!Number.isInteger(count) || count < 1 || selected.length < count) {
+    if (selected.length < count) {
+      for (const candidate of candidates) {
+        const key = headlineKey(candidate.headline);
+        if (selectedHeadlines.has(key)) continue;
+        selected.push(candidate);
+        selectedHeadlines.add(key);
+        if (selected.length === count) break;
+      }
+    }
+
+    if (selected.length < count) {
       throw new RangeError("Невозможно сформировать запрошенное число фейковых заголовков");
     }
 
-    return selected.map(({ headline }) => ({
+    return selected.map(({ headline, date, details }) => ({
       headline,
       summary: DEFAULT_SUMMARY,
       category: "Новостная повестка",
-      date: todayKey(now),
+      date,
       answer: "fake",
       url: "",
       sourceName: "",
       explanation:
-        "Этот заголовок создан внутри игры из вымышленных деталей и не был взят из новостной ленты. Похожие события всё равно следует проверять отдельно.",
+        `Этот заголовок создан внутри игры в стилистике текущей новостной ленты. В нём намеренно изменены ключевые фактические детали (${details.join(", ")}), поэтому в доступных лентах такого заголовка нет.`,
     }));
   }
 
@@ -456,10 +623,17 @@
 
     const selectedReal = selectBalancedArticles(normalized, realCount, randomIntFn);
     const realStories = buildRealStories(selectedReal, now);
+    const selectedRealKeys = new Set(selectedReal.map((article) => headlineKey(article.title)));
+    const unusedArticles = normalized.filter(
+      (article) => !selectedRealKeys.has(headlineKey(article.title)),
+    );
+    const referenceArticles = unusedArticles.length >= fakeCount ? unusedArticles : normalized;
     const fakeStories = buildFakeStories(fakeCount, {
       now,
       randomIntFn,
       excludedHeadlines: excludedFakeHeadlines,
+      referenceArticles,
+      knownRealHeadlines: normalized.map((article) => article.title),
     });
     return shuffle([...realStories, ...fakeStories], randomIntFn);
   }
