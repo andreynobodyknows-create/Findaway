@@ -40,6 +40,18 @@ jobs:
         run: dotnet run -c Release --no-build -- --simtest
       - name: Behavior regression
         run: dotnet run -c Release --no-build -- --behaviortest
+      - name: Fly snapshot smoke test
+        shell: pwsh
+        run: |
+          dotnet run -c Release --no-build -- --snapshot fly.png
+          if (-not (Test-Path .\fly.png)) { throw "Fly snapshot was not created" }
+          if ((Get-Item .\fly.png).Length -lt 1000) { throw "Fly snapshot is unexpectedly small" }
+      - name: Brain snapshot smoke test
+        shell: pwsh
+        run: |
+          dotnet run -c Release --no-build -- --brainshot brain.png
+          if (-not (Test-Path .\brain.png)) { throw "Brain snapshot was not created" }
+          if ((Get-Item .\brain.png).Length -lt 1000) { throw "Brain snapshot is unexpectedly small" }
       - name: Publish portable win-x64
         run: dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o publish
       - name: Upload portable build
