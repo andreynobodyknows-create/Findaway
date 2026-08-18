@@ -1,0 +1,26 @@
+name: DesktopFly Windows
+
+on:
+  push:
+    branches: [ "agent/desktop-fly-windows" ]
+    paths:
+      - "desktop-fly-windows/**"
+      - ".github/workflows/desktop-fly-windows.yml"
+  pull_request:
+    paths:
+      - "desktop-fly-windows/**"
+      - ".github/workflows/desktop-fly-windows.yml"
+
+jobs:
+  build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: desktop-fly-windows
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+      - name: Build
+        run: dotnet build -c Release
