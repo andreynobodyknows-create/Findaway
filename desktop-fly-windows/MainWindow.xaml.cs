@@ -6,6 +6,7 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using DesktopFly.Windows.Core;
 using Forms = System.Windows.Forms;
+using Point = System.Windows.Point;
 
 namespace DesktopFly.Windows;
 
