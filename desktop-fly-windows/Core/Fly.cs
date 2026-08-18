@@ -293,11 +293,11 @@ public sealed class Fly
                 Math.Clamp(Position.X, bounds.Left + 20, bounds.Right - 20),
                 Math.Clamp(Position.Y, bounds.Top + 20, bounds.Bottom - 20));
 
-            foreach (var ledge in Terrain)
+            foreach (var candidate in Terrain)
             {
-                if (Position.X > ledge.X0 - 8 && Position.X < ledge.X1 + 8 && Math.Abs(Position.Y - ledge.Y) < 20 && Rnd(0, 1) < .9 * dt)
+                if (Position.X > candidate.X0 - 8 && Position.X < candidate.X1 + 8 && Math.Abs(Position.Y - candidate.Y) < 20 && Rnd(0, 1) < .9 * dt)
                 {
-                    AttachedLedge = ledge;
+                    AttachedLedge = candidate;
                     Heading = Math.Cos(Heading) >= 0 ? 0 : Math.PI;
                     break;
                 }
