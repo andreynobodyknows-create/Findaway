@@ -6,32 +6,15 @@
         AllowsTransparency="True"
         Background="Transparent"
         ShowInTaskbar="False"
+        ShowActivated="False"
         Topmost="True"
         ResizeMode="NoResize">
-  <Canvas x:Name="World" IsHitTestVisible="False">
-    <Grid x:Name="FlyVisual" Width="34" Height="26" RenderTransformOrigin="0.5,0.5">
-      <Grid.RenderTransform>
-        <TransformGroup>
-          <ScaleTransform x:Name="FlyScale" ScaleX="1" ScaleY="1" />
-          <RotateTransform x:Name="FlyRotate" Angle="0" />
-        </TransformGroup>
-      </Grid.RenderTransform>
-
-      <Ellipse Width="15" Height="23" Fill="#FF20170F" Stroke="#FF050505" StrokeThickness="1.2" />
-      <Ellipse Width="12" Height="11" Fill="#FF29231B" Stroke="#FF050505" StrokeThickness="1" Margin="0,-17,0,0" />
-      <Ellipse Width="13" Height="19" Fill="#88D9E7ED" Stroke="#777C8F98" StrokeThickness="0.8" Margin="-17,-2,0,0" RenderTransformOrigin="1,0.5">
-        <Ellipse.RenderTransform><RotateTransform Angle="-28" /></Ellipse.RenderTransform>
-      </Ellipse>
-      <Ellipse Width="13" Height="19" Fill="#88D9E7ED" Stroke="#777C8F98" StrokeThickness="0.8" Margin="17,-2,0,0" RenderTransformOrigin="0,0.5">
-        <Ellipse.RenderTransform><RotateTransform Angle="28" /></Ellipse.RenderTransform>
-      </Ellipse>
-      <Ellipse Width="4" Height="4" Fill="#FF9D190E" Margin="-7,-20,0,0" />
-      <Ellipse Width="4" Height="4" Fill="#FF9D190E" Margin="7,-20,0,0" />
-    </Grid>
-
-    <Border x:Name="DebugPanel" Canvas.Left="18" Canvas.Top="18" Padding="10,7"
-            CornerRadius="7" Background="#B81A1D23" Visibility="Collapsed">
+  <Grid x:Name="Root" IsHitTestVisible="False">
+    <Viewport3D x:Name="Viewport" ClipToBounds="False" />
+    <Border x:Name="DebugPanel" HorizontalAlignment="Left" VerticalAlignment="Top"
+            Margin="18" Padding="10,7" CornerRadius="7" Background="#C51A1D23"
+            Visibility="Collapsed">
       <TextBlock x:Name="DebugText" Foreground="White" FontFamily="Consolas" FontSize="12" />
     </Border>
-  </Canvas>
+  </Grid>
 </Window>

@@ -5,12 +5,13 @@
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
     <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <AssemblyName>DesktopFly.Windows</AssemblyName>
     <RootNamespace>DesktopFly.Windows</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="data\**\*" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="data\**\*" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

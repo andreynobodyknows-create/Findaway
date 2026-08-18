@@ -12,7 +12,7 @@ on:
       - ".github/workflows/desktop-fly-windows.yml"
 
 jobs:
-  build:
+  build-test-publish:
     runs-on: windows-latest
     defaults:
       run:
@@ -32,5 +32,19 @@ jobs:
         run: |
           if (-not (Test-Path .\data\circuit.json)) { throw "Missing data/circuit.json" }
           if (-not (Test-Path .\data\brain_points.json)) { throw "Missing data/brain_points.json" }
+          $c = Get-Content .\data\circuit.json -Raw | ConvertFrom-Json
+          if ($c.neurons.Count -lt 600) { throw "Circuit is unexpectedly small" }
       - name: Build
         run: dotnet build -c Release
+      - name: Circuit regression
+        run: dotnet run -c Release --no-build -- --simtest
+      - name: Behavior regression
+        run: dotnet run -c Release --no-build -- --behaviortest
+      - name: Publish portable win-x64
+        run: dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o publish
+      - name: Upload portable build
+        uses: actions/upload-artifact@v4
+        with:
+          name: DesktopFly-Windows-win-x64
+          path: desktop-fly-windows/publish/**
+          if-no-files-found: error
