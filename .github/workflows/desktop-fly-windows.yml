@@ -22,5 +22,13 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "8.0.x"
+      - name: Fetch FlyWire data
+        shell: pwsh
+        run: .\scripts\fetch-data.ps1
+      - name: Verify data
+        shell: pwsh
+        run: |
+          if (-not (Test-Path .\data\circuit.json)) { throw "Missing data/circuit.json" }
+          if (-not (Test-Path .\data\brain_points.json)) { throw "Missing data/brain_points.json" }
       - name: Build
         run: dotnet build -c Release
