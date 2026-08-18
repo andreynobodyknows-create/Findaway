@@ -24,6 +24,8 @@ jobs:
           dotnet-version: "8.0.x"
       - name: Fetch FlyWire data
         shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: .\scripts\fetch-data.ps1
       - name: Verify data
         shell: pwsh
