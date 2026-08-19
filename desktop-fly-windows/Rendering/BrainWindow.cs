@@ -5,6 +5,7 @@ using System.Numerics;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using DesktopFly.Windows.Core;
 
 namespace DesktopFly.Windows.Rendering;
@@ -14,6 +15,8 @@ public sealed class BrainWindow : Window
     private readonly BrainCanvas _canvas;
     private bool _pausedRotation;
     private double _lastSeconds;
+    private double _lastRenderSeconds;
+    private const double RenderInterval = 1.0 / 15.0;
 
     public BrainWindow(BrainPointsFile points, CircuitFile circuit, LifSimulation sim)
     {
@@ -36,8 +39,11 @@ public sealed class BrainWindow : Window
     private void RenderFrame(object? sender, EventArgs e)
     {
         var now = Environment.TickCount64 / 1000.0;
-        var dt = _lastSeconds == 0 ? 0 : Math.Clamp(now - _lastSeconds, 0, .05);
+        if (_lastSeconds == 0) _lastSeconds = now;
+        if (now - _lastRenderSeconds < RenderInterval) return;
+        var dt = Math.Clamp(now - _lastSeconds, 0, .1);
         _lastSeconds = now;
+        _lastRenderSeconds = now;
         if (!_pausedRotation) _canvas.Yaw += dt * .22;
         _canvas.AdvanceFlashes();
         _canvas.InvalidateVisual();
@@ -51,11 +57,18 @@ public sealed class BrainCanvas : FrameworkElement
     private readonly LifSimulation _sim;
     private readonly Dictionary<int, long> _flashes = [];
     private readonly HashSet<int> _gf;
-    private readonly Brush[] _classBrushes;
+    private readonly Color[] _classColors;
     private readonly Vector3 _center;
     private readonly float _range;
     private readonly Typeface _typeface = new("Segoe UI");
     private string _status = "hover pauses · click a region to stimulate ~60 nearby circuit neurons";
+    private WriteableBitmap? _somaBitmap;
+    private int[] _somaPixels = [];
+    private int _bitmapWidth;
+    private int _bitmapHeight;
+    private double _rasterYaw = double.NaN;
+    private double _rasterPitch = double.NaN;
+
     public double Yaw { get; set; } = .5;
     public double Pitch { get; set; } = -.15;
 
@@ -65,7 +78,7 @@ public sealed class BrainCanvas : FrameworkElement
         _circuit = circuit;
         _sim = sim;
         _gf = circuit.Neurons.Select((n, i) => (n, i)).Where(x => x.n.Role == "gf").Select(x => x.i).ToHashSet();
-        _classBrushes = BuildClassBrushes(points.Classes);
+        _classColors = BuildClassColors(points.Classes);
         (_center, _range) = ComputeBounds(points.Points);
         Cursor = Cursors.Cross;
         MouseLeftButtonDown += OnClick;
@@ -86,24 +99,19 @@ public sealed class BrainCanvas : FrameworkElement
         dc.DrawRectangle(new SolidColorBrush(Color.FromRgb(10, 12, 17)), null, new Rect(0, 0, ActualWidth, ActualHeight));
         if (ActualWidth < 2 || ActualHeight < 2) return;
 
+        var pixelsPerDip = VisualTreeHelper.GetDpi(this).PixelsPerDip;
         var header = new FormattedText(
             $"FlyWire v783 · {_points.Points.Count:N0} somas · {_circuit.Neurons.Count} simulated neurons",
             System.Globalization.CultureInfo.InvariantCulture, FlowDirection.LeftToRight, _typeface, 16,
-            Brushes.White, VisualTreeHelper.GetDpi(this).PixelsPerDip);
+            Brushes.White, pixelsPerDip);
         dc.DrawText(header, new Point(18, 12));
         var status = new FormattedText(_status, System.Globalization.CultureInfo.InvariantCulture,
-            FlowDirection.LeftToRight, _typeface, 11, new SolidColorBrush(Color.FromRgb(160, 174, 195)),
-            VisualTreeHelper.GetDpi(this).PixelsPerDip);
+            FlowDirection.LeftToRight, _typeface, 11, new SolidColorBrush(Color.FromRgb(160, 174, 195)), pixelsPerDip);
         dc.DrawText(status, new Point(18, 35));
 
         var usable = new Rect(15, 58, Math.Max(1, ActualWidth - 30), Math.Max(1, ActualHeight - 73));
-        foreach (var p in _points.Points)
-        {
-            if (p.Length < 4) continue;
-            var screen = Project(new Vector3(p[0], p[1], p[2]), usable);
-            var ci = Math.Clamp((int)p[3], 0, _classBrushes.Length - 1);
-            dc.DrawRectangle(_classBrushes[ci], null, new Rect(screen.X - .7, screen.Y - .7, 1.4, 1.4));
-        }
+        EnsureSomaRaster(usable);
+        if (_somaBitmap is not null) dc.DrawImage(_somaBitmap, usable);
 
         for (var i = 0; i < _circuit.Neurons.Count; i++)
         {
@@ -120,6 +128,51 @@ public sealed class BrainCanvas : FrameworkElement
                 dc.DrawEllipse(brush, null, screen, _gf.Contains(i) ? 7 : 4, _gf.Contains(i) ? 7 : 4);
             }
         }
+    }
+
+    private void EnsureSomaRaster(Rect usable)
+    {
+        var w = Math.Max(1, (int)Math.Ceiling(usable.Width));
+        var h = Math.Max(1, (int)Math.Ceiling(usable.Height));
+        if (_somaBitmap is not null && w == _bitmapWidth && h == _bitmapHeight &&
+            Math.Abs(Yaw - _rasterYaw) < .001 && Math.Abs(Pitch - _rasterPitch) < .001) return;
+
+        if (_somaBitmap is null || w != _bitmapWidth || h != _bitmapHeight)
+        {
+            _bitmapWidth = w;
+            _bitmapHeight = h;
+            _somaBitmap = new WriteableBitmap(w, h, 96, 96, PixelFormats.Bgra32, null);
+            _somaPixels = new int[w * h];
+        }
+        else
+        {
+            Array.Clear(_somaPixels, 0, _somaPixels.Length);
+        }
+
+        var rasterRect = new Rect(0, 0, w, h);
+        foreach (var p in _points.Points)
+        {
+            if (p.Length < 4) continue;
+            var screen = Project(new Vector3(p[0], p[1], p[2]), rasterRect);
+            var x = (int)Math.Round(screen.X);
+            var y = (int)Math.Round(screen.Y);
+            if ((uint)x >= (uint)w || (uint)y >= (uint)h) continue;
+            var ci = Math.Clamp((int)p[3], 0, _classColors.Length - 1);
+            var c = _classColors[ci];
+            var argb = (c.A << 24) | (c.R << 16) | (c.G << 8) | c.B;
+            PutPixel(x, y, argb, w, h);
+            if (x + 1 < w) PutPixel(x + 1, y, argb, w, h);
+            if (y + 1 < h) PutPixel(x, y + 1, argb, w, h);
+        }
+
+        _somaBitmap.WritePixels(new Int32Rect(0, 0, w, h), _somaPixels, w * 4, 0);
+        _rasterYaw = Yaw;
+        _rasterPitch = Pitch;
+    }
+
+    private void PutPixel(int x, int y, int argb, int w, int h)
+    {
+        if ((uint)x < (uint)w && (uint)y < (uint)h) _somaPixels[y * w + x] = argb;
     }
 
     private void OnClick(object sender, MouseButtonEventArgs e)
@@ -183,17 +236,16 @@ public sealed class BrainCanvas : FrameworkElement
         return (center, Math.Max(range, .001f));
     }
 
-    private static Brush[] BuildClassBrushes(IReadOnlyList<string> classes)
+    private static Color[] BuildClassColors(IReadOnlyList<string> classes)
     {
         var palette = new[]
         {
-            Color.FromArgb(115, 66, 165, 245), Color.FromArgb(115, 91, 213, 164),
-            Color.FromArgb(115, 238, 138, 75), Color.FromArgb(115, 193, 115, 235),
-            Color.FromArgb(115, 244, 211, 94), Color.FromArgb(115, 232, 93, 117),
-            Color.FromArgb(115, 95, 207, 226), Color.FromArgb(115, 175, 185, 200)
+            Color.FromArgb(145, 66, 165, 245), Color.FromArgb(145, 91, 213, 164),
+            Color.FromArgb(145, 238, 138, 75), Color.FromArgb(145, 193, 115, 235),
+            Color.FromArgb(145, 244, 211, 94), Color.FromArgb(145, 232, 93, 117),
+            Color.FromArgb(145, 95, 207, 226), Color.FromArgb(145, 175, 185, 200)
         };
-        return Enumerable.Range(0, Math.Max(1, classes.Count))
-            .Select(i => (Brush)new SolidColorBrush(palette[i % palette.Length])).ToArray();
+        return Enumerable.Range(0, Math.Max(1, classes.Count)).Select(i => palette[i % palette.Length]).ToArray();
     }
 
     private static Brush RoleBrush(string role) => role switch
