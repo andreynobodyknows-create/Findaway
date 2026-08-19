@@ -1,48 +1,61 @@
-# DesktopFly Windows 🪰
+# DesktopFly Windows
 
-A native Windows port of **DesktopFly**: a procedural 3D fruit fly living on the desktop whose high-level behavior is driven by a live 1 kHz spiking simulation of a FlyWire-derived Drosophila circuit.
+Native Windows port of the DesktopFly concept: a click-through desktop fruit fly whose high-level behavior is driven by a live spiking simulation of a FlyWire-derived Drosophila circuit.
 
-The Windows port targets feature parity with `DenisSergeevitch/desktop-fly`. See [PARITY.md](PARITY.md) for the macOS → Windows mapping.
+## Demo-ready build
 
-## What is implemented
+The portable `win-x64` package produced by GitHub Actions is self-contained: extract it and run `DesktopFly.Windows.exe`. No .NET SDK is required.
 
-- transparent topmost click-through desktop overlay;
-- procedural 3D fly with body, compound eyes, antennae, six articulated legs and translucent wings;
-- tripod gait, grooming, backward walking, nervous darting, wing raising, flight effort, altitude scaling, smooth landing and sleep breathing;
-- 668-neuron FlyWire circuit at 1 ms LIF resolution with the original model constants;
-- LC4/LPLC2 looming, GF escape, DNa steering, DNp09 walking, DNg11 grooming, MDN backward locomotion and DNp02/04/11 wing effort;
-- body → brain gait feedback through ascending partners and cursor wind through sensory partners;
-- live rotating brain window with 23,210 FlyWire soma positions and simulated spike flashes;
-- click a brain region to stimulate nearby circuit neurons for 400 ms;
-- real Windows window edges as ledges, moving-window tracking, lost-ledge takeoff and new-window looming;
-- mouse clicks as substrate taps and keyboard timing as vibration (the app never records which key was pressed);
-- circadian activity, idle-driven sleep and thermal tempo where Windows firmware exposes ACPI thermal telemetry;
-- multiple flies: only fly #1 carries the connectome simulation, matching the reference project;
-- multi-monitor display hopping;
-- tray controls: Pause/Resume, Show/Hide Brain, Escape Test, Move Display, Add/Remove Fly, Scare Flies, Diagnostics, Quit;
-- `--simtest`, `--behaviortest`, `--snapshot` and `--brainshot` diagnostic modes.
+For a presentation, launch the app once on the exact machine/display setup before the meeting. The binary is currently unsigned, so Windows security policy may show a SmartScreen/unknown-publisher warning on first launch.
 
-## Requirements for source launch
+## Implemented parity
 
-- Windows 10 or Windows 11 x64
-- .NET 8 SDK
-- Git
-- PowerShell
+- transparent, topmost, click-through WPF desktop overlay;
+- procedural 3D fly: body, eyes, antennae, six articulated legs, wings and shadow;
+- tripod gait, grooming, backward walking, nervous darting, flight/altitude/landing and sleep breathing;
+- FlyWire `circuit.json` + `brain_points.json` data loading;
+- 668-neuron, 1 kHz LIF simulation with LC4/LPLC2, Giant Fiber, DNa01/02, DNp09, DNg11, MDN, DNp02/04/11, ascending and sensory partners;
+- delayed inhibition, gap boost, noise/arousal bursts, gait proprioception and air-puff drive;
+- cursor looming split by anatomical left/right, GF-gated escape, DNa steering and command-neuron behavior mapping;
+- live brain view with 23,210 soma points, live spike flashes and click stimulation;
+- Win32 application-window top edges as ledges, dragged-window tracking, lost-ledge takeoff and new-window looming;
+- global clicks as substrate taps; keyboard timing only as vibration (key identity is never recorded);
+- circadian activity, idle-driven sleep, sensory gating and non-blocking thermal telemetry with neutral fallback;
+- multiple flies (connectome only on fly #1), multi-monitor hopping and tray controls;
+- `--simtest`, `--behaviortest`, `--snapshot`, `--brainshot` diagnostics.
 
-## Run from source
+See `PARITY.md` for the macOS → Windows capability mapping.
+
+## Validation
+
+GitHub Actions on Windows runs the following gate before publishing the demo artifact:
+
+1. fetch and structurally verify FlyWire data;
+2. Release build;
+3. circuit regression (`--simtest`);
+4. 17 behavior regression checks (`--behaviortest`), including directional DNa-left steering;
+5. fly PNG smoke render;
+6. brain PNG smoke render;
+7. self-contained single-file `win-x64` publish;
+8. package-content/license verification with no debug PDB;
+9. launch the **published EXE**, verify both overlay and live brain window become visible, then exit cleanly;
+10. upload the portable artifact.
+
+## Source/data licensing
+
+The upstream DesktopFly source-code basis is MIT licensed; see `LICENSE`. FlyWire-derived files in `data/` are distributed separately under CC BY-NC 4.0; see `data/DATA_LICENSE.md`.
+
+## Build from source
+
+Requirements: Windows 10/11 x64, .NET 8 SDK, PowerShell.
 
 ```powershell
-git clone https://github.com/andreynobodyknows-create/Findaway.git
-cd Findaway
-git switch agent/desktop-fly-windows
-cd desktop-fly-windows
 .\scripts\fetch-data.ps1
+dotnet build -c Release
 dotnet run -c Release
 ```
 
-The FlyWire-derived data are intentionally fetched separately because they are CC BY-NC 4.0 while the application code is MIT-compatible.
-
-## Diagnostics
+Diagnostics:
 
 ```powershell
 dotnet run -c Release -- --simtest
@@ -51,18 +64,4 @@ dotnet run -c Release -- --snapshot fly.png
 dotnet run -c Release -- --brainshot brain.png
 ```
 
-## Build a portable Windows package
-
-```powershell
-dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o publish
-```
-
-Run `publish\DesktopFly.Windows.exe`. Keep the generated `publish\data` directory beside the executable.
-
-GitHub Actions performs data retrieval, circuit/behavior tests, Release build and a self-contained `win-x64` publish. The resulting portable package is uploaded as the `DesktopFly-Windows-win-x64` workflow artifact.
-
-## Scientific scope
-
-The graph topology, neuron identities, soma positions, synapse counts and neurotransmitter predictions come from the FlyWire-derived dataset. LIF dynamics, neurotransmitter sign mapping, global weight scale, inhibitory delay, gap-junction boost, sensory transduction and body mapping remain model assumptions, exactly as in the reference project’s honesty section.
-
-Reference: `DenisSergeevitch/desktop-fly` / FlyWire FAFB v783.
+Reference project: `DenisSergeevitch/desktop-fly`.
