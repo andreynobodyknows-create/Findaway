@@ -66,11 +66,16 @@ jobs:
       - name: Published GUI smoke test
         shell: pwsh
         run: |
+          Remove-Item .\guismoke.log -ErrorAction SilentlyContinue
           $p = Start-Process -FilePath .\publish\DesktopFly.Windows.exe -ArgumentList '--guismoke' -PassThru
           if (-not $p.WaitForExit(15000)) {
+            Write-Host '--- GUI smoke checkpoints ---'
+            if (Test-Path .\guismoke.log) { Get-Content .\guismoke.log } else { Write-Host 'no checkpoint log created' }
             Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
             throw "Published GUI smoke test timed out"
           }
+          Write-Host '--- GUI smoke checkpoints ---'
+          if (Test-Path .\guismoke.log) { Get-Content .\guismoke.log }
           if ($p.ExitCode -ne 0) { throw "Published GUI smoke test failed with exit code $($p.ExitCode)" }
       - name: Upload portable build
         uses: actions/upload-artifact@v4
