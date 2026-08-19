@@ -87,14 +87,20 @@ public static class TestRunner
             f => f.State == Fly.FlyState.Walking && f.Speed > 25, 1.8));
         Check("MDN stim -> backward walking", () => NeuralScenario(data, bounds, dt, s => s.Stimulate(s.MdnIndices, .4f, 800),
             f => f.BackwardTimer > 0, 1.4));
-        Check("DNa-left stim -> steering", () =>
+        Check("DNa-left stim -> left turn in screen coordinates", () =>
         {
             var sim = new LifSimulation(data.Circuit, 5); var builder = new SignalBuilder(); var fly = FreshFly();
             fly.State = Fly.FlyState.Walking; fly.Speed = 35; fly.StateAge = 1; fly.Heading = 0;
             sim.Step(400); _ = sim.ConsumeGF(); sim.Stimulate(sim.DnaLeftIndices, .45f, 1000);
-            var max = 0.0;
-            for (var i = 0; i < 100; i++) { sim.Step(16); var sig = builder.Make(sim, dt); fly.Update(dt, bounds, null, sig); max = Math.Max(max, Math.Abs(fly.Heading)); }
-            return (max > .12, $"|heading| max {max:F2} rad");
+            var minHeading = 0.0;
+            for (var i = 0; i < 100; i++)
+            {
+                sim.Step(16);
+                var sig = builder.Make(sim, dt);
+                fly.Update(dt, bounds, null, sig);
+                minHeading = Math.Min(minHeading, fly.Heading);
+            }
+            return (minHeading < -.12, $"min heading {minHeading:F2} rad (negative = visual left/CCW)");
         });
         Check("moderate loom -> nervous response", () =>
         {
