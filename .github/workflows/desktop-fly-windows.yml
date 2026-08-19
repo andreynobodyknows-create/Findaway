@@ -1,0 +1,85 @@
+name: DesktopFly Windows
+
+on:
+  push:
+    branches: [ "agent/desktop-fly-windows" ]
+    paths:
+      - "desktop-fly-windows/**"
+      - ".github/workflows/desktop-fly-windows.yml"
+  pull_request:
+    paths:
+      - "desktop-fly-windows/**"
+      - ".github/workflows/desktop-fly-windows.yml"
+
+jobs:
+  build-test-publish:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: desktop-fly-windows
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+      - name: Fetch FlyWire data
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: .\scripts\fetch-data.ps1
+      - name: Verify data
+        shell: pwsh
+        run: |
+          if (-not (Test-Path .\data\circuit.json)) { throw "Missing data/circuit.json" }
+          if (-not (Test-Path .\data\brain_points.json)) { throw "Missing data/brain_points.json" }
+          $c = Get-Content .\data\circuit.json -Raw | ConvertFrom-Json
+          if ($c.neurons.Count -lt 600) { throw "Circuit is unexpectedly small" }
+      - name: Build
+        run: dotnet build -c Release
+      - name: Circuit regression
+        run: dotnet run -c Release --no-build -- --simtest
+      - name: Behavior regression
+        run: dotnet run -c Release --no-build -- --behaviortest
+      - name: Fly snapshot smoke test
+        shell: pwsh
+        run: |
+          dotnet run -c Release --no-build -- --snapshot fly.png
+          if (-not (Test-Path .\fly.png)) { throw "Fly snapshot was not created" }
+          if ((Get-Item .\fly.png).Length -lt 1000) { throw "Fly snapshot is unexpectedly small" }
+      - name: Brain snapshot smoke test
+        shell: pwsh
+        run: |
+          dotnet run -c Release --no-build -- --brainshot brain.png
+          if (-not (Test-Path .\brain.png)) { throw "Brain snapshot was not created" }
+          if ((Get-Item .\brain.png).Length -lt 1000) { throw "Brain snapshot is unexpectedly small" }
+      - name: Publish portable win-x64
+        run: dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:DebugType=None -p:DebugSymbols=false -o publish
+      - name: Verify portable contents
+        shell: pwsh
+        run: |
+          if (-not (Test-Path .\publish\DesktopFly.Windows.exe)) { throw "Missing portable executable" }
+          if (-not (Test-Path .\publish\data\circuit.json)) { throw "Missing portable circuit data" }
+          if (-not (Test-Path .\publish\data\brain_points.json)) { throw "Missing portable brain data" }
+          if (-not (Test-Path .\publish\data\DATA_LICENSE.md)) { throw "Missing FlyWire data license" }
+          if (-not (Test-Path .\publish\LICENSE)) { throw "Missing upstream MIT license notice" }
+          if (Test-Path .\publish\DesktopFly.Windows.pdb) { throw "Debug symbols leaked into demo package" }
+      - name: Published GUI smoke test
+        shell: pwsh
+        run: |
+          Remove-Item .\guismoke.log -ErrorAction SilentlyContinue
+          $p = Start-Process -FilePath .\publish\DesktopFly.Windows.exe -ArgumentList '--guismoke' -PassThru
+          if (-not $p.WaitForExit(15000)) {
+            Write-Host '--- GUI smoke checkpoints ---'
+            if (Test-Path .\guismoke.log) { Get-Content .\guismoke.log } else { Write-Host 'no checkpoint log created' }
+            Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
+            throw "Published GUI smoke test timed out"
+          }
+          Write-Host '--- GUI smoke checkpoints ---'
+          if (Test-Path .\guismoke.log) { Get-Content .\guismoke.log }
+          if ($p.ExitCode -ne 0) { throw "Published GUI smoke test failed with exit code $($p.ExitCode)" }
+      - name: Upload portable build
+        uses: actions/upload-artifact@v4
+        with:
+          name: DesktopFly-Windows-win-x64
+          path: desktop-fly-windows/publish/**
+          if-no-files-found: error
