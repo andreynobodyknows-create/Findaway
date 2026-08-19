@@ -12,6 +12,12 @@ public partial class App : System.Windows.Application
         base.OnStartup(e);
         if (e.Args.Length > 0)
         {
+            if (e.Args[0] == "--guismoke")
+            {
+                GuiSmokeRunner.Start();
+                return;
+            }
+
             var code = e.Args[0] switch
             {
                 "--simtest" => TestRunner.RunSimTest(),
