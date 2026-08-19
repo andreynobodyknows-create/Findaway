@@ -53,7 +53,16 @@ jobs:
           if (-not (Test-Path .\brain.png)) { throw "Brain snapshot was not created" }
           if ((Get-Item .\brain.png).Length -lt 1000) { throw "Brain snapshot is unexpectedly small" }
       - name: Publish portable win-x64
-        run: dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o publish
+        run: dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:DebugType=None -p:DebugSymbols=false -o publish
+      - name: Verify portable contents
+        shell: pwsh
+        run: |
+          if (-not (Test-Path .\publish\DesktopFly.Windows.exe)) { throw "Missing portable executable" }
+          if (-not (Test-Path .\publish\data\circuit.json)) { throw "Missing portable circuit data" }
+          if (-not (Test-Path .\publish\data\brain_points.json)) { throw "Missing portable brain data" }
+          if (-not (Test-Path .\publish\data\DATA_LICENSE.md)) { throw "Missing FlyWire data license" }
+          if (-not (Test-Path .\publish\LICENSE)) { throw "Missing upstream MIT license notice" }
+          if (Test-Path .\publish\DesktopFly.Windows.pdb) { throw "Debug symbols leaked into demo package" }
       - name: Published GUI smoke test
         shell: pwsh
         run: |
