@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 
 namespace DesktopFly.Windows.Platform;
@@ -91,39 +93,60 @@ public sealed class WindowSense
         return unchecked(now - info.dwTime) / 1000.0;
     }
 
-    private static DateTime _nextThermalProbe = DateTime.MinValue;
+    private static long _nextThermalProbeTicks;
     private static double _thermalTempo = 1.0;
+    private static int _thermalProbeRunning;
 
+    // Never block the render/UI thread on WMI. Some machines expose no usable
+    // ACPI thermal zone and WMI can be slow or unavailable. We immediately
+    // return the last safe value and probe opportunistically in the background.
     public static double ThermalTempo()
     {
-        if (DateTime.UtcNow < _nextThermalProbe) return _thermalTempo;
-        _nextThermalProbe = DateTime.UtcNow.AddSeconds(30);
+        var now = DateTime.UtcNow.Ticks;
+        if (now >= Interlocked.Read(ref _nextThermalProbeTicks) &&
+            Interlocked.CompareExchange(ref _thermalProbeRunning, 1, 0) == 0)
+        {
+            Interlocked.Exchange(ref _nextThermalProbeTicks, DateTime.UtcNow.AddSeconds(30).Ticks);
+            _ = Task.Run(ProbeThermalTempo);
+        }
+        return Volatile.Read(ref _thermalTempo);
+    }
+
+    private static void ProbeThermalTempo()
+    {
+        var tempo = 1.0;
         try
         {
             var locatorType = Type.GetTypeFromProgID("WbemScripting.SWbemLocator");
-            if (locatorType is null) return _thermalTempo = 1.0;
-            dynamic locator = Activator.CreateInstance(locatorType)!;
-            dynamic service = locator.ConnectServer(".", @"root\WMI");
-            dynamic results = service.ExecQuery("SELECT CurrentTemperature FROM MSAcpi_ThermalZoneTemperature");
-            var hottest = double.MinValue;
-            foreach (dynamic item in results)
+            if (locatorType is not null)
             {
-                double c = ((double)item.CurrentTemperature / 10.0) - 273.15;
-                hottest = Math.Max(hottest, c);
+                dynamic locator = Activator.CreateInstance(locatorType)!;
+                dynamic service = locator.ConnectServer(".", @"root\WMI");
+                dynamic results = service.ExecQuery("SELECT CurrentTemperature FROM MSAcpi_ThermalZoneTemperature");
+                var hottest = double.MinValue;
+                foreach (dynamic item in results)
+                {
+                    double c = ((double)item.CurrentTemperature / 10.0) - 273.15;
+                    hottest = Math.Max(hottest, c);
+                }
+                tempo = hottest switch
+                {
+                    > 75 => 1.50,
+                    > 60 => 1.35,
+                    > 45 => 1.15,
+                    _ => 1.0
+                };
             }
-            _thermalTempo = hottest switch
-            {
-                > 75 => 1.50,
-                > 60 => 1.35,
-                > 45 => 1.15,
-                _ => 1.0
-            };
         }
         catch
         {
-            _thermalTempo = 1.0;
+            tempo = 1.0;
         }
-        return _thermalTempo;
+        finally
+        {
+            Volatile.Write(ref _thermalTempo, tempo);
+            Interlocked.Exchange(ref _thermalProbeRunning, 0);
+        }
     }
 
     private delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
