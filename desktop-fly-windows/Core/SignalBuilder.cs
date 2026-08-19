@@ -13,7 +13,10 @@ public sealed class SignalBuilder
         return new BrainSignals(
             Escape: sim.ConsumeGF(),
             Nervous: Math.Clamp(sim.RateLoom / 80f, 0, 1),
-            TurnBias: Math.Clamp((diff - _dnaBaseline) * 0.04f, -1f, 1f),
+            // Fly positions use Windows screen coordinates where +Y points down.
+            // The macOS reference uses +Y up, so invert steering to preserve
+            // the same anatomical left/right turn semantics.
+            TurnBias: -Math.Clamp((diff - _dnaBaseline) * 0.04f, -1f, 1f),
             Backward: sim.RateMdn > 8f,
             WalkDrive: Math.Clamp(sim.RateFwd / 10f, 0, 1.3f),
             GroomDrive: sim.RateGroom / 8f,
