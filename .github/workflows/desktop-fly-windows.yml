@@ -54,6 +54,15 @@ jobs:
           if ((Get-Item .\brain.png).Length -lt 1000) { throw "Brain snapshot is unexpectedly small" }
       - name: Publish portable win-x64
         run: dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o publish
+      - name: Published GUI smoke test
+        shell: pwsh
+        run: |
+          $p = Start-Process -FilePath .\publish\DesktopFly.Windows.exe -ArgumentList '--guismoke' -PassThru
+          if (-not $p.WaitForExit(15000)) {
+            Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
+            throw "Published GUI smoke test timed out"
+          }
+          if ($p.ExitCode -ne 0) { throw "Published GUI smoke test failed with exit code $($p.ExitCode)" }
       - name: Upload portable build
         uses: actions/upload-artifact@v4
         with:
