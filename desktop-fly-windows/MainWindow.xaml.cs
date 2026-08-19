@@ -216,7 +216,10 @@ public partial class MainWindow : Window
         loom = Math.Clamp(loom + _loomOverride, 0, 1);
         var fx = Math.Cos(fly.Heading); var fy = Math.Sin(fly.Heading);
         var rdx = rel.X / dist; var rdy = rel.Y / dist;
-        var cross = fx * rdy - fy * rdx;
+        // Screen coordinates use +Y downward, opposite to the macOS/world
+        // convention. Invert the 2D cross product so positive still means
+        // "threat on the fly's anatomical left".
+        var cross = -(fx * rdy - fy * rdx);
         var lw = Math.Clamp(.5 + .5 * cross, .12, 1);
         var rw = Math.Clamp(.5 - .5 * cross, .12, 1);
         var puff = Math.Clamp(_mouseVelocity.Length / 1500, 0, 1) * Math.Clamp(1 - dist / 500, 0, 1);
@@ -236,7 +239,7 @@ public partial class MainWindow : Window
             var strength = Math.Clamp(1 - dist / 480, 0, 1) * .75;
             if (strength <= .08) continue;
             var fx = Math.Cos(fly.Heading); var fy = Math.Sin(fly.Heading);
-            var cross = (fx * rel.Y - fy * rel.X) / dist;
+            var cross = -(fx * rel.Y - fy * rel.X) / dist;
             _windowLoomLeft = Math.Max(_windowLoomLeft, (float)(strength * Math.Clamp(.5 + .5 * cross, .12, 1)));
             _windowLoomRight = Math.Max(_windowLoomRight, (float)(strength * Math.Clamp(.5 - .5 * cross, .12, 1)));
         }
