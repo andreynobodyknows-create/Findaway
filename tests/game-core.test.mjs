@@ -91,10 +91,65 @@ test("каждая новая игра получает свежие реали�
   );
   assert.equal(
     [...firstGame, ...secondGame].every(
-      (story) => story.headline.length >= 80 && story.headline.split(/\s+/u).length >= 10,
+      (story) => story.headline.length >= 35 && story.headline.length < 180,
     ),
     true,
   );
+});
+
+test("фейки меняют деталь исходной новости и объясняют подмену", () => {
+  const inputs = [
+    { title: "Парламент одобрил проект нового транспортного соглашения", link: "https://example.com/original", sourceName: "Тест", pubDate: "2026-09-18" },
+    { title: "Продажи новых автомобилей выросли на 12% за прошедший месяц", link: "https://example.com/sales", pubDate: "2026-09-19" },
+  ];
+  const result = Core.buildFakeStories(2, { articles: inputs, randomIntFn: () => 0 });
+  assert.equal(new Set(result.map(item => item.scenarioKey)).size, 2);
+  for (const item of result) {
+    assert.ok(item.originalHeadline);
+    assert.notEqual(item.headline, item.originalHeadline);
+    assert.ok(item.explanation.includes(item.originalHeadline));
+    assert.ok(item.explanation.includes(item.change));
+    assert.ok(item.url.startsWith("https://example.com/"));
+    assert.notEqual(item.date, Core.todayKey());
+  }
+});
+
+test("фейки не совпадают с лентой, а их оригиналы не выдают ответ в той же игре", () => {
+  const inputs = Array.from({length: 15}, (_, i) => ({
+    title: `Продажи автомобилей в регионе ${i} выросли за прошедший месяц`,
+    sourceName: `Редакция ${i % 5}`, link: `https://example.com/${i}`,
+  }));
+  inputs.push({title: "Продажи автомобилей в регионе 0 снизились за прошедший месяц"});
+  const rounds = Core.createRoundSet(inputs, {randomIntFn: () => 0});
+  const real = new Set(rounds.filter(item => item.answer === "real").map(item => item.headline));
+  for (const item of rounds.filter(item => item.answer === "fake")) {
+    assert.ok(!inputs.some(input => input.title === item.headline));
+    assert.ok(!real.has(item.originalHeadline));
+  }
+});
+
+test("сценарии не повторяются в соседних играх и запас не иссякает после ста игр", () => {
+  let history = [], scenarios = [];
+  for (let game = 0; game < 100; game++) {
+    const result = Core.buildFakeStories(5, {
+      excludedHeadlines: history, recentScenarioKeys: scenarios, randomIntFn: () => 0,
+    });
+    assert.equal(new Set(result.map(item => item.scenarioKey)).size, 5);
+    for (const item of result) {
+      assert.ok(!history.includes(item.headline));
+      assert.ok(!scenarios.includes(item.scenarioKey));
+    }
+    history = [...history, ...result.map(item => item.headline)].slice(-100);
+    scenarios = [...scenarios, ...result.map(item => item.scenarioKey)].slice(-10);
+  }
+});
+
+test("цитаты и отрицания не превращаются в механически изменённые утверждения", () => {
+  const inputs = [
+    { title: "Парламент не одобрил проект нового транспортного соглашения" },
+    { title: "Министр: «Экспорт вырос на 12% за прошедший месяц»" },
+  ];
+  assert.ok(Core.buildFakeStories(2, {articles: inputs}).every(item => !item.originalHeadline));
 });
 
 test("набор строится из RSS-объектов с полем title", () => {
@@ -112,4 +167,49 @@ test("набор строится из RSS-объектов с полем title"
 
 test("для десяти раундов нужны пять заголовков из ленты", () => {
   assert.throws(() => Core.createRoundSet(articles.slice(0, 4)), /минимум 5/u);
+});
+
+async function launchPage(localStorage) {
+  const nodes = new Map();
+  const node = () => ({
+    textContent: "", classList: {add() {}, remove() {}},
+    setAttribute() {}, removeAttribute() {}, replaceChildren() {},
+    addEventListener() {}, querySelectorAll: () => [], focus() {},
+  });
+  const browser = vm.createContext({
+    URL, URLSearchParams, Intl, Date, console, AbortController, setTimeout, clearTimeout,
+    localStorage,
+    document: {querySelector(selector) {
+      if (!nodes.has(selector)) nodes.set(selector, node());
+      return nodes.get(selector);
+    }},
+    fetch: async url => url.startsWith("/api/") ? {ok: false} : {
+      ok: true, json: async () => ({status: "ok", items: articles}),
+    },
+  });
+  vm.runInContext(source, browser);
+  vm.runInContext(runtimeSource, browser);
+  for (let tick = 0; tick < 30 && nodes.get("#round").textContent !== "1 / 10"; tick++) {
+    await new Promise(resolve => setImmediate(resolve));
+  }
+  assert.equal(nodes.get("#round").textContent, "1 / 10", nodes.get("#status").textContent);
+  return nodes;
+}
+
+test("история переживает перезагрузку страницы", async () => {
+  const saved = new Map();
+  const storage = {getItem: key => saved.get(key) ?? null, setItem: (key, value) => saved.set(key, value)};
+  await launchPage(storage);
+  const first = JSON.parse([...saved.values()][0]);
+  assert.equal(first.headlines.length, 5);
+  await launchPage(storage);
+  const second = JSON.parse([...saved.values()][0]);
+  assert.equal(second.headlines.length, 10);
+  assert.equal(new Set(second.headlines).size, 10);
+  assert.equal(new Set(second.scenarios).size, 10);
+});
+
+test("повреждённая или недоступная история не мешает начать игру", async () => {
+  await launchPage({getItem: () => "{broken", setItem() {}});
+  await launchPage({getItem() {throw new Error("denied");}, setItem() {throw new Error("denied");}});
 });

@@ -12,6 +12,7 @@
   const ROUND_COUNT = 10;
   const REQUEST_TIMEOUT_MS = 6500;
   const FAKE_HISTORY_LIMIT = 100;
+  const FAKE_HISTORY_KEY = "findaway.fake-history.v2";
   const SOURCE_ARTICLE_LIMIT = 12;
 
   const NEWS_SOURCES = [
@@ -97,6 +98,19 @@
   let streak = 0;
   let mode = "loading";
   const recentFakeHeadlines = new Set();
+  let recentScenarioKeys = [];
+  try {
+    const saved = JSON.parse(root.localStorage.getItem(FAKE_HISTORY_KEY));
+    if (Array.isArray(saved?.headlines)) {
+      saved.headlines.filter(item => typeof item === "string")
+        .slice(-FAKE_HISTORY_LIMIT).forEach(item => recentFakeHeadlines.add(item));
+    }
+    if (Array.isArray(saved?.scenarios)) {
+      recentScenarioKeys = saved.scenarios.filter(item => typeof item === "string").slice(-10);
+    }
+  } catch {
+    // Storage may be unavailable in private browsing or a sandboxed preview.
+  }
 
   const roundEl = document.querySelector("#round");
   const scoreEl = document.querySelector("#score");
@@ -297,9 +311,11 @@
     feedbackEl.className = `feedback ${correct ? "correct" : "wrong"}`;
     feedbackEl.replaceChildren(result, document.createTextNode(` ${story.explanation}`));
 
-    if (story.answer === "real" && story.url) {
+    if (story.url) {
       sourceLinkEl.href = story.url;
-      sourceLinkEl.textContent = `Открыть источник: ${story.sourceName}`;
+      sourceLinkEl.textContent = story.answer === "fake"
+        ? `Сравнить с оригиналом: ${story.sourceName}`
+        : `Открыть источник: ${story.sourceName}`;
       sourceLinkEl.classList.remove("hidden");
     }
 
@@ -365,6 +381,16 @@
       const oldestHeadline = recentFakeHeadlines.values().next().value;
       recentFakeHeadlines.delete(oldestHeadline);
     }
+    recentScenarioKeys = [...recentScenarioKeys,
+      ...rounds.filter(story => story.answer === "fake").map(story => story.scenarioKey),
+    ].slice(-10);
+    try {
+      root.localStorage.setItem(FAKE_HISTORY_KEY, JSON.stringify({
+        headlines: [...recentFakeHeadlines], scenarios: recentScenarioKeys,
+      }));
+    } catch {
+      // In-memory history still prevents repeats during this page visit.
+    }
   }
 
   async function startGame() {
@@ -379,6 +405,7 @@
       stories = Core.createRoundSet(loaded.articles, {
         roundCount: ROUND_COUNT,
         excludedFakeHeadlines: recentFakeHeadlines,
+        recentScenarioKeys,
       });
       rememberFakeHeadlines(stories);
       if (loaded.isDemo && loaded.sourceCount === 0) {
